@@ -209,14 +209,44 @@ class App extends React.Component {
     this.setState({ plate }, () => this.genAssay());
   }
 
-  checkPhase;
-
   handleWait() {
-    this.controlTimer();
+    const { phase, phases } = this.state;
+    const hasPrimaryExposure = phases["primaryExposure"].length > 0;
+    const hasPrimaryWash = phases["primaryWash"].length > 0;
+    //const hasSecondaryExposure = phases['secondaryExposure'].length > 0;
+    let newPhase = phase;
+
+    if (hasPrimaryExposure && hasPrimaryWash) {
+      newPhase = "secondaryExposure";
+    }
+
+    if (phase !== newPhase) {
+      this.setState(
+        {
+          phase: newPhase
+        },
+        () => this.controlTimer()
+      );
+    }
   }
 
   handleWash() {
-    this.controlTimer();
+    const { phase, phases } = this.state;
+    const hasPrimaryWash = phases["primaryWash"].length > 0;
+    let newPhase = phase;
+
+    if (!hasPrimaryWash) {
+      newPhase = "primaryWash";
+    }
+
+    if (phase !== newPhase) {
+      this.setState(
+        {
+          phase: newPhase
+        },
+        () => this.controlTimer()
+      );
+    }
   }
 
   render() {
