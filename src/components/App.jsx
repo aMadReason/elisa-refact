@@ -29,15 +29,17 @@ class App extends React.Component {
       primaryEfficiencyFactor: 1.0,
       variancePercent: 4,
 
+      acidApplies: false,
       plate: null,
       phase: "primaryExposure",
       inputVolume: 100,
-      dilutionFactor: null,
+      //dilutionFactor: null,
       inputConcentration: 0,
       timer: null,
       timerOn: false,
-      actualStamp: 0,
-      displayStamp: 0,
+      timestamp: 0,
+      // actualStamp: 0,
+      // displayStamp: 0,
       waitOn: false,
       washOn: false,
       secondaryAntibody: null,
@@ -78,7 +80,6 @@ class App extends React.Component {
     const {
       assay,
       plate,
-      phase,
       phases,
       secondaryAntibody,
       selectedSamples,
@@ -98,7 +99,7 @@ class App extends React.Component {
     const primaryWashResidue = calclateWashResidueFromTimestamps(
       phases["primaryWash"] || []
     );
-    let antibodyEff = 0;
+    let antibodyEff = efficiency;
 
     if (secondaryAntibody) {
       // if secondary antibody has specific plates defined
@@ -123,22 +124,27 @@ class App extends React.Component {
       // loop over series
       result[key] = series.map(i => {
         const dilution = i;
-        const primary = timeModifier(i, sumInt(phases["primaryExposure"]));
+        let primary = 0;
         let secondary = 0;
 
-        if (!secondaryAntibody && phase !== "secondaryExposure") {
-          return { dilution, primary, secondary: 0 };
+        if (phases["primaryExposure"].length > 0) {
+          primary = timeModifier(i, sumInt(phases["primaryExposure"]));
         }
 
-        secondary = calculateBoundAntibody(
-          primary,
-          concentration,
-          antibodyEff,
-          binding
-        );
-        secondary = timeModifier(secondary, phases["secondaryExposure"]);
-        secondary = washModifier(secondary, primaryWashResidue, binding);
-        //   secondary + calculateVariance(secondary, this.variancePercent);
+        if (phases["secondaryExposure"].length > 0) {
+          secondary = calculateBoundAntibody(
+            primary,
+            concentration,
+            antibodyEff,
+            binding
+          );
+          secondary = timeModifier(
+            secondary,
+            sumInt(phases["secondaryExposure"])
+          );
+          secondary = washModifier(secondary, primaryWashResidue, binding);
+          //secondary + calculateVariance(secondary, this.variancePercent);
+        }
 
         return {
           dilution,
@@ -159,11 +165,12 @@ class App extends React.Component {
     const sample = this.samples.find(
       i => i.subject.toString() === subject.toString()
     );
-    return { ...selectedSamples, [key]: sample };
+    selectedSamples[key] = sample;
+    return selectedSamples;
   }
 
   controlTimer() {
-    const { timerOn, actualStamp, phase, phases } = this.state;
+    const { timerOn, timestamp, phase, phases } = this.state;
     const start = +new Date();
     const action = this.wait.bind(this);
 
@@ -172,10 +179,10 @@ class App extends React.Component {
         {
           timerOn: false,
           timer: clearInterval(this.state.timer),
-          displayStamp: null,
+          timestamp: null,
           phases: {
             ...phases,
-            [phase]: [...phases[phase], actualStamp]
+            [phase]: [...phases[phase], timestamp]
           }
         },
         () => this.genAssay()
@@ -190,19 +197,14 @@ class App extends React.Component {
   }
 
   wait() {
-    const { actualStamp, displayStamp } = this.state;
-    const stamp = actualStamp + 20 * 1000;
-    const display = displayStamp + 20 * 1000;
-    this.setState({
-      actualStamp: stamp,
-      displayStamp: display
-    });
+    const { timestamp } = this.state;
+    const stamp = timestamp + 20 * 1000;
+    this.setState({ timestamp: stamp }, () => this.genAssay());
   }
 
   handleSelectSample(key, subject) {
-    this.setState({ selectedSamples: this.selectSample(key, subject) }, () =>
-      this.genAssay()
-    );
+    const selectedSamples = this.selectSample(key, subject);
+    this.setState({ selectedSamples }, () => this.genAssay());
   }
 
   handleSelectPlate(plate) {
@@ -210,7 +212,7 @@ class App extends React.Component {
   }
 
   handleWait() {
-    const { phase, phases } = this.state;
+    const { phase, phases, waitOn } = this.state;
     const hasPrimaryExposure = phases["primaryExposure"].length > 0;
     const hasPrimaryWash = phases["primaryWash"].length > 0;
     //const hasSecondaryExposure = phases['secondaryExposure'].length > 0;
@@ -220,18 +222,17 @@ class App extends React.Component {
       newPhase = "secondaryExposure";
     }
 
-    if (phase !== newPhase) {
-      this.setState(
-        {
-          phase: newPhase
-        },
-        () => this.controlTimer()
-      );
-    }
+    this.setState(
+      {
+        waitOn: !waitOn,
+        phase: newPhase
+      },
+      () => this.controlTimer()
+    );
   }
 
   handleWash() {
-    const { phase, phases } = this.state;
+    const { phase, phases, washOn } = this.state;
     const hasPrimaryWash = phases["primaryWash"].length > 0;
     let newPhase = phase;
 
@@ -239,31 +240,54 @@ class App extends React.Component {
       newPhase = "primaryWash";
     }
 
-    if (phase !== newPhase) {
-      this.setState(
-        {
-          phase: newPhase
-        },
-        () => this.controlTimer()
-      );
-    }
+    this.setState(
+      {
+        washOn: !washOn,
+        phase: newPhase
+      },
+      () => this.controlTimer()
+    );
+  }
+
+  handleConcentrationInput(value) {
+    this.setState({
+      phase: "secondaryExposure",
+      inputConcentration: value
+    });
+  }
+
+  handleSelectSecondaryAntibody(key) {
+    this.setState({
+      secondaryAntibody: this.secondaryAntibodies[key]
+    });
   }
 
   render() {
     const {
+      acidApplied,
+      assay,
       timerOn,
       waitOn,
       washOn,
-      displayStamp,
+      timestamp,
       plate,
       phases,
-      dilutionFactor,
-      selectedSamples
+      selectedSamples,
+      phase,
+      secondaryAntibody
     } = this.state;
-    const sampleKeys = Object.keys(this.samples);
+    const sampleKeys = Object.keys(assay);
+    const dilutionFactor = calculateDilutionFactor(this.state.inputVolume);
     const primaryWashResidue = calclateWashResidueFromTimestamps(
       phases["primaryWash"] || []
     );
+
+    const concentration = !secondaryAntibody
+      ? 0
+      : calculateConcentrationFactor(
+          +this.state.inputConcentration,
+          secondaryAntibody.microPerMil
+        );
 
     return (
       <div>
@@ -283,32 +307,36 @@ class App extends React.Component {
             Variance (result wobble){" "}
             <input
               type="text"
-              defaultValue={this.state.primaryEfficiencyFactor}
+              defaultValue={this.state.variancePercent}
               onInput={e => this.setState({ variancePercent: e.target.value })}
             />
             %
           </label>
+          <div>
+            <strong>Phase: </strong>
+            <em>{phase}</em>
+          </div>
         </fieldset>
         <hr />
 
         <div>
           <button
-            // disabled={acidApplied}
+            disabled={acidApplied || washOn}
             aria-pressed={timerOn && waitOn}
-            onClick={({ nativeEvent }) => this.handleWash()}
+            onClick={({ nativeEvent }) => this.handleWait()}
           >
             {waitOn ? "Wait Stop" : "Wait Start"}
           </button>
 
           <button
-            // disabled={acidApplied}
+            disabled={acidApplied || waitOn}
             aria-pressed={timerOn && washOn}
-            onClick={({ nativeEvent }) => this.handleExposureOverTime("wash")}
+            onClick={({ nativeEvent }) => this.handleWash()}
           >
-            {washOn ? "Wash Stop" : "Wash Start"}
+            {washOn ? "wash Stop" : "wash Start"}
           </button>
 
-          <span>{timestampToMins(displayStamp)} mins</span>
+          <span>{timestampToMins(timestamp)} mins</span>
         </div>
 
         <hr />
@@ -333,7 +361,7 @@ class App extends React.Component {
           <input
             type="number"
             defaultValue={this.state.inputVolume}
-            onInput={e => this.handleDilutionVolume(e)}
+            onInput={e => this.setState({ inputVolume: e.target.value })}
           />{" "}
           {dilutionFactor && <small>Dilution Factor: {dilutionFactor}</small>}
         </fieldset>
@@ -383,7 +411,7 @@ class App extends React.Component {
           <legend>Step 4</legend>
           <label>
             <select
-              onChange={e => this.handleSelectSecondaryAB(e.target.value)}
+              onChange={e => this.handleSelectSecondaryAntibody(e.target.value)}
             >
               <option>select..</option>
               {Object.keys(this.secondaryAntibodies).map(k => (
@@ -398,9 +426,9 @@ class App extends React.Component {
           <input
             type="number"
             defaultValue={this.state.secondaryInputVolume}
-            onInput={e => this.handleABConcentration(e)}
+            onInput={e => this.handleConcentrationInput(e.target.value)}
           />{" "}
-          concentration: {this.state.secondaryConcentration}
+          concentration: {concentration}
         </fieldset>
 
         <hr />
@@ -408,21 +436,21 @@ class App extends React.Component {
         <div style={{ maxWidth: "100%" }}>
           <ResultTable
             property="dilution"
-            assay={this.state.assay}
+            assay={assay}
             title="Dilutions"
             selectedSamples={selectedSamples}
           />
 
           <ResultTable
             property="primary"
-            assay={this.state.assay}
+            assay={assay}
             title="Primary Exposure"
             selectedSamples={selectedSamples}
           />
 
           <ResultTable
             property="secondary"
-            assay={this.state.assay}
+            assay={assay}
             title="Secondary Exposure"
             selectedSamples={selectedSamples}
           />

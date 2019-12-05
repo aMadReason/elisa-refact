@@ -7,7 +7,7 @@ export function calculateConcentrationFactor(
 
 export function sumInt(args) {
   const arg = args || arguments;
-  return arg.reduce((a, b) => parseInt(a, 10) + parseInt(b, 10), 0);
+  return arg.reduce((a, b) => a + b, 0);
 }
 
 export function calculateBoundAntibody(
