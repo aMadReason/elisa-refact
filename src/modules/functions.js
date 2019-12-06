@@ -1,4 +1,4 @@
-export function calculateConcentrationFactor(
+export function calcConcentrationFactor(
   volume,
   initialConcentration = 500 // microgramPerMil
 ) {
@@ -10,7 +10,7 @@ export function sumInt(args) {
   return arg.reduce((a, b) => a + b, 0);
 }
 
-export function calculateBoundAntibody(
+export function calcBoundAntibody(
   value,
   concentration,
   efficiency,
@@ -23,18 +23,18 @@ export function calculateBoundAntibody(
 
 export function washModifier(value, washResidue, binding) {
   let output = value + washResidue * binding * 100;
-  //output = output + calculateVariance(output, 8);
+  //output = output + calcVariance(output, 8);
   if (output < 0.05) output = 0.05;
   if (output > 2) output = 2;
   return output;
 }
 
-export function calculateDilutionFactor(volume) {
+export function calcDilutionFactor(volume) {
   const vol = +volume; // make sure it's not a string
   return (100 + vol) / vol;
 }
 
-export function calculateDilutionSeries(
+export function calcDilutionSeries(
   value = 0,
   dilutionFactor = 1.0,
   efficiencyFactor = 1.0
@@ -52,7 +52,8 @@ const randomDec = (low = 0, high = 1, toFixed = 1) => {
   return val.toFixed(toFixed);
 };
 
-export function calculateVariance(value, percent = 8, toFixed = 2) {
+export function calcVariance(value, percent = 8, toFixed = 2) {
+  if(percent === 0) return +value;
   const max = (value / 100) * percent;
   const variance = randomDec(-max, max, toFixed);
   return +variance;
@@ -66,39 +67,51 @@ export const roundPrecision = (num, dec) => {
   ).toFixed(dec);
 };
 
-// timestamp in miliseconds
-export function timeModifier(value, timestamp) {
-  if (!timestamp) return value;
-  const timeModifier = 1 - 5 / timestampToMins(timestamp);
+export function timeModifier(value, timesInMilSec) {
+  if (!timesInMilSec) return value;
+  const timeModifier = 1 - 5 / timeToMins(timesInMilSec);
   const result = value * Math.max(timeModifier, 0.05);
   return result;
 }
 
-export function calclateWashEfficiency(timestamp) {
-  const mins = timestampToMins(timestamp);
+export function calclateWashEfficiency(timesInMilSec) {
+  const mins = timeToMins(timesInMilSec);
   const washEfficiency = 0.9 - 0.5 / mins;
   return Math.max(washEfficiency, 0);
 }
 
-export function calclateWashResidue(washEfficiencies = []) {
+export function calcWashResidue(washEfficiencies = []) {
   if (!Array.isArray(washEfficiencies) || washEfficiencies.length === 0) {
     return 1;
   }
-  const temp = washEfficiencies.map(i => 1 - i);
+  const temp = washEfficiencies.filter(i => i).map(i => 1 - i);
   let val = temp.shift();
   temp.map(v => (val = val * v));
   return val;
 }
 
-export function calclateWashResidueFromTimestamps(timestamps = []) {
-  const washEffiencies = timestamps
+export function calcWashResidueFromTimes(time = []) {
+  const washEffiencies = time
     .filter(i => i)
     .map(t => calclateWashEfficiency(t));
 
-  const residue = calclateWashResidue(washEffiencies);
+  const residue = calcWashResidue(washEffiencies);
   return residue;
 }
 
-export function timestampToMins(timestamp) {
-  return Math.round(+new Date(timestamp) / 1000 / 60);
+export function calcOpticalDensity(value, seconds) {
+  return Math.min(0.03 + (seconds / 1800) * value, 2);
+}
+
+export function calcOpacityForWavelength(opticalDensityValue, wavelengthModifier) {
+  return opticalDensityValue * wavelengthModifier;
+}
+
+export function calcOpacity(opticalDensityValue) {
+  return (opticalDensityValue / 2); // od max is 2, css opacity has max of 1
+}
+
+export function timeToMins(timesInMilSec) {
+  //return Math.round(+new Date(timesInMilSec) / 60);
+  return Math.round(+new Date(timesInMilSec) / 1000 / 60);
 }

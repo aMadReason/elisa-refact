@@ -1,17 +1,18 @@
 import React from "react";
 
 import {
-  calculateDilutionFactor,
-  calculateDilutionSeries,
+  calcDilutionFactor,
+  calcDilutionSeries,
   roundPrecision,
   timeModifier,
-  calclateWashResidueFromTimestamps,
-  timestampToMins,
-  calculateConcentrationFactor,
+  calcWashResidueFromTimes,
+  timeToMins,
+  calcConcentrationFactor,
   sumInt,
-  calculateBoundAntibody,
-  washModifier
-  // calculateVariance
+  calcBoundAntibody,
+  washModifier,
+  calcVariance,
+  calcOpticalDensity
 } from "../modules/functions";
 
 import SampleSelect from "./SampleSelect";
@@ -37,7 +38,7 @@ class App extends React.Component {
       inputConcentration: 0,
       timer: null,
       timerOn: false,
-      timestamp: 0,
+      time: 0, // in seconds
       // actualStamp: 0,
       // displayStamp: 0,
       waitOn: false,
@@ -46,7 +47,8 @@ class App extends React.Component {
       phases: {
         primaryExposure: [],
         primaryWash: [],
-        secondaryExposure: []
+        secondaryExposure: [],
+        secondaryWash: []
       },
       selectedSamples: {
         a: null,
@@ -91,12 +93,12 @@ class App extends React.Component {
     const binding = secondaryAntibody ? secondaryAntibody.binding : 0;
     const efficiency = secondaryAntibody ? secondaryAntibody.efficiency : 0;
     const plates = secondaryAntibody ? secondaryAntibody.plates : [];
-    const concentration = calculateConcentrationFactor(
+    const concentration = calcConcentrationFactor(
       +this.state.inputConcentration,
       microPerMil
     );
-    const dilutionFactor = calculateDilutionFactor(this.state.inputVolume);
-    const primaryWashResidue = calclateWashResidueFromTimestamps(
+    const dilutionFactor = calcDilutionFactor(this.state.inputVolume);
+    const primaryWashResidue = calcWashResidueFromTimes(
       phases["primaryWash"] || []
     );
     let antibodyEff = efficiency;
@@ -114,7 +116,7 @@ class App extends React.Component {
       let series = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
       if (selectedSamples[key] && plate && dilutionFactor) {
         const value = selectedSamples[key].plates[plate] / 10;
-        series = calculateDilutionSeries(
+        series = calcDilutionSeries(
           value,
           dilutionFactor,
           primaryEfficiencyFactor
@@ -126,13 +128,16 @@ class App extends React.Component {
         const dilution = i;
         let primary = 0;
         let secondary = 0;
+        let opticalDensity = 0;
 
+        // calc primary
         if (phases["primaryExposure"].length > 0) {
           primary = timeModifier(i, sumInt(phases["primaryExposure"]));
         }
 
+        // calc secondary
         if (phases["secondaryExposure"].length > 0) {
-          secondary = calculateBoundAntibody(
+          secondary = calcBoundAntibody(
             primary,
             concentration,
             antibodyEff,
@@ -143,13 +148,18 @@ class App extends React.Component {
             sumInt(phases["secondaryExposure"])
           );
           secondary = washModifier(secondary, primaryWashResidue, binding);
-          //secondary + calculateVariance(secondary, this.variancePercent);
+          secondary = secondary + calcVariance(secondary, this.variancePercent);
+        }
+
+        if (phases["secondaryExposure"].length > 0) {
+          opticalDensity = calcOpticalDensity(secondary, sumInt(phases["primaryExposure"]))
         }
 
         return {
           dilution,
           primary,
-          secondary
+          secondary,
+          opticalDensity
         };
       });
       return null;
@@ -170,8 +180,7 @@ class App extends React.Component {
   }
 
   controlTimer() {
-    const { timerOn, timestamp, phase, phases } = this.state;
-    const start = +new Date();
+    const { timerOn, phase, phases } = this.state;
     const action = this.wait.bind(this);
 
     if (timerOn) {
@@ -179,10 +188,10 @@ class App extends React.Component {
         {
           timerOn: false,
           timer: clearInterval(this.state.timer),
-          timestamp: null,
+          time: 0,
           phases: {
             ...phases,
-            [phase]: [...phases[phase], timestamp]
+            [phase]: [...phases[phase], 0] 
           }
         },
         () => this.genAssay()
@@ -190,16 +199,25 @@ class App extends React.Component {
     }
 
     this.setState({
-      start,
       timerOn: true,
       timer: setInterval(action, 150)
     });
   }
 
   wait() {
-    const { timestamp } = this.state;
-    const stamp = timestamp + 20 * 1000;
-    this.setState({ timestamp: stamp }, () => this.genAssay());
+    const { time, phases, phase } = this.state;
+    const stamp = time + 20 * 1000;
+    const phaseTimes = [...phases[phase]];
+
+    phaseTimes.pop(); // remove previous counter is already waiting
+
+    this.setState({ 
+      time: stamp,
+      phases: {
+      ...phases,
+      [phase]: [...phaseTimes, time]
+      }
+     }, () => this.genAssay());
   }
 
   handleSelectSample(key, subject) {
@@ -269,7 +287,7 @@ class App extends React.Component {
       timerOn,
       waitOn,
       washOn,
-      timestamp,
+      time,
       plate,
       phases,
       selectedSamples,
@@ -277,14 +295,14 @@ class App extends React.Component {
       secondaryAntibody
     } = this.state;
     const sampleKeys = Object.keys(assay);
-    const dilutionFactor = calculateDilutionFactor(this.state.inputVolume);
-    const primaryWashResidue = calclateWashResidueFromTimestamps(
+    const dilutionFactor = calcDilutionFactor(this.state.inputVolume);
+    const primaryWashResidue = calcWashResidueFromTimes(
       phases["primaryWash"] || []
     );
 
     const concentration = !secondaryAntibody
       ? 0
-      : calculateConcentrationFactor(
+      : calcConcentrationFactor(
           +this.state.inputConcentration,
           secondaryAntibody.microPerMil
         );
@@ -336,7 +354,7 @@ class App extends React.Component {
             {washOn ? "wash Stop" : "wash Start"}
           </button>
 
-          <span>{timestampToMins(timestamp)} mins</span>
+          <span>{timeToMins(time)} mins</span>
         </div>
 
         <hr />
@@ -399,7 +417,7 @@ class App extends React.Component {
                 .filter(i => i)
                 .map((i, idx) => (
                   <li key={idx}>
-                    Wash {idx + 1} {timestampToMins(i)}
+                    Wash {idx + 1} {timeToMins(i)}
                   </li>
                 ))}
           </ul>
@@ -452,6 +470,12 @@ class App extends React.Component {
             property="secondary"
             assay={assay}
             title="Secondary Exposure"
+            selectedSamples={selectedSamples}
+          />
+                    <ResultTable
+            property="opticalDensity"
+            assay={assay}
+            title="OpticalDensity"
             selectedSamples={selectedSamples}
           />
         </div>
