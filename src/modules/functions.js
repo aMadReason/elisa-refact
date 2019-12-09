@@ -10,20 +10,20 @@ export function sumInt(args) {
   return arg.reduce((a, b) => a + b, 0);
 }
 
-export function calcBoundAntibody(
-  value,
-  concentration,
-  efficiency,
-  binding
-) {
-  if (+value === 0) return 0;
+export function calcBoundAntibody(value, concentration, efficiency, binding) {
+  if (value === 0) return 0;
   const value1 = concentration * efficiency * value;
   return value1 + concentration * binding;
 }
 
-export function washModifier(value, washResidue, binding) {
+export function washModifierPrimary(value, washResidue) {
+  let output = value - 4 * washResidue * value + washResidue * 2;
+  return output;
+}
+
+export function washModifierSecondary(value, washResidue, binding) {
+  if (value === 0) return 0;
   let output = value + washResidue * binding * 100;
-  //output = output + calcVariance(output, 8);
   if (output < 0.05) output = 0.05;
   if (output > 2) output = 2;
   return output;
@@ -53,7 +53,7 @@ const randomDec = (low = 0, high = 1, toFixed = 1) => {
 };
 
 export function calcVariance(value, percent = 8, toFixed = 2) {
-  if(percent === 0) return +value;
+  if (percent === 0) return +value;
   const max = (value / 100) * percent;
   const variance = randomDec(-max, max, toFixed);
   return +variance;
@@ -68,7 +68,7 @@ export const roundPrecision = (num, dec) => {
 };
 
 export function timeModifier(value, timesInMilSec) {
-  if (!timesInMilSec) return value;
+  if (!timesInMilSec || timesInMilSec === 0) return value;
   const timeModifier = 1 - 5 / timeToMins(timesInMilSec);
   const result = value * Math.max(timeModifier, 0.05);
   return result;
@@ -99,19 +99,27 @@ export function calcWashResidueFromTimes(time = []) {
   return residue;
 }
 
-export function calcOpticalDensity(value, seconds) {
-  return Math.min(0.03 + (seconds / 1800) * value, 2);
+export function calcOpticalDensity(value, time) {
+  const seconds = timeToMins(time);
+  return Math.min(0.03 + (seconds / 30) * value, 2);
+  //return Math.min(0.03 + (seconds / 100) * value, 2);
 }
 
-export function calcOpacityForWavelength(opticalDensityValue, wavelengthModifier) {
+export function calcOpticalDensityForWavelength(
+  opticalDensityValue,
+  wavelengthModifier
+) {
   return opticalDensityValue * wavelengthModifier;
 }
 
 export function calcOpacity(opticalDensityValue) {
-  return (opticalDensityValue / 2); // od max is 2, css opacity has max of 1
+  return opticalDensityValue / 2; // od max is 2, css opacity has max of 1
 }
 
 export function timeToMins(timesInMilSec) {
-  //return Math.round(+new Date(timesInMilSec) / 60);
   return Math.round(+new Date(timesInMilSec) / 1000 / 60);
+}
+
+export function timeToSecs(timesInMilSec) {
+  return Math.round(+new Date(timesInMilSec) / 1000);
 }

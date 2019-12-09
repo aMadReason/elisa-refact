@@ -104,7 +104,16 @@ function AssaySvg(props) {
   //   return undefined;
   // });
 
+  Object.keys(assay).map(key => {
+    if (assay[key].length === 0)
+      assay[key] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  });
+
+  console.log(assay);
+
   const fill = acid ? "yellow" : fillColor;
+
+  console.log(assay);
 
   return (
     <svg version="1.1" viewBox="0 0 508.45 345.93">

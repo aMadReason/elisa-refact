@@ -19,10 +19,26 @@ export const config = {
     "544nm": "0.2",
     "590nm": "0.14",
     "645nm": "0.11"
+  },
+  chromagens: {
+    "chromagen-1": "blue"
   }
 };
 
 export const samples = [
+  {
+    subject: "dummy",
+    plates: {
+      "IgM RFs": 152,
+      "IgG RFs": 4,
+      "IgA RFs": 2,
+      "anti-CCP": 15,
+      ANA: 2,
+      dsDNA: 0,
+      Sm: 0,
+      RNP: 0
+    }
+  },
   {
     subject: "201",
     plates: {

@@ -10,13 +10,17 @@ import {
   calcConcentrationFactor,
   sumInt,
   calcBoundAntibody,
-  washModifier,
+  washModifierPrimary,
+  washModifierSecondary,
   calcVariance,
-  calcOpticalDensity
+  calcOpticalDensity,
+  calcOpacity,
+  calcOpticalDensityForWavelength
 } from "../modules/functions";
 
 import SampleSelect from "./SampleSelect";
 import ResultTable from "./ResultTable";
+import AssaySvg from "./AssaySvg";
 
 class App extends React.Component {
   constructor(props) {
@@ -25,14 +29,16 @@ class App extends React.Component {
     this.plates = this.props.plates || Object.keys(props.samples[0].plates);
     this.waveLengths = this.props.waveLengths || {};
     this.secondaryAntibodies = this.props.secondaryAntibodies || {};
+    this.chromagens = props.chromagens || { default: "blue" };
 
     this.state = {
       primaryEfficiencyFactor: 1.0,
-      variancePercent: 4,
+      variancePercent: 0, //4,
 
       acidApplies: false,
       plate: null,
-      phase: "primaryExposure",
+      phase: null,
+      chromgen: null,
       inputVolume: 100,
       //dilutionFactor: null,
       inputConcentration: 0,
@@ -48,7 +54,8 @@ class App extends React.Component {
         primaryExposure: [],
         primaryWash: [],
         secondaryExposure: [],
-        secondaryWash: []
+        secondaryWash: [],
+        chromagenExposure: []
       },
       selectedSamples: {
         a: null,
@@ -98,8 +105,9 @@ class App extends React.Component {
       microPerMil
     );
     const dilutionFactor = calcDilutionFactor(this.state.inputVolume);
-    const primaryWashResidue = calcWashResidueFromTimes(
-      phases["primaryWash"] || []
+    const primaryWashResidue = calcWashResidueFromTimes(phases["primaryWash"]);
+    const secondaryWashResidue = calcWashResidueFromTimes(
+      phases["secondaryWash"]
     );
     let antibodyEff = efficiency;
 
@@ -125,42 +133,67 @@ class App extends React.Component {
 
       // loop over series
       result[key] = series.map(i => {
-        const dilution = i;
-        let primary = 0;
-        let secondary = 0;
-        let opticalDensity = 0;
+        const data = {
+          dilution: i,
+          primary: 0,
+          secondary: 0,
+          opticalDensity: 0,
+          opacity: 0
+        };
 
         // calc primary
-        if (phases["primaryExposure"].length > 0) {
-          primary = timeModifier(i, sumInt(phases["primaryExposure"]));
+        if (i > 0 && phases["primaryExposure"].length > 0) {
+          //data.primary = data.primary * this.state.primaryEfficiencyFactor;
+          data.primary = timeModifier(i, sumInt(phases["primaryExposure"]));
+          data.primary = washModifierPrimary(data.primary, primaryWashResidue);
         }
 
         // calc secondary
         if (phases["secondaryExposure"].length > 0) {
-          secondary = calcBoundAntibody(
-            primary,
+          data.secondary = calcBoundAntibody(
+            data.primary,
             concentration,
             antibodyEff,
             binding
           );
-          secondary = timeModifier(
-            secondary,
+          data.secondary = timeModifier(
+            data.secondary,
             sumInt(phases["secondaryExposure"])
           );
-          secondary = washModifier(secondary, primaryWashResidue, binding);
-          secondary = secondary + calcVariance(secondary, this.variancePercent);
+          data.secondary = washModifierSecondary(
+            data.secondary,
+            secondaryWashResidue,
+            binding
+          );
+
+          if (this.variancePercent > 0) {
+            data.secondary + calcVariance(data.secondary, this.variancePercent);
+          }
         }
 
-        if (phases["secondaryExposure"].length > 0) {
-          opticalDensity = calcOpticalDensity(secondary, sumInt(phases["primaryExposure"]))
+        if (phases["chromagenExposure"].length > 0) {
+          data.opticalDensity = calcOpticalDensity(
+            data.secondary,
+            sumInt(phases["chromagenExposure"])
+          );
+          data.opacity = calcOpacity(data.opticalDensity);
+          Object.keys(this.waveLengths).map(key => {
+            data[key] = calcOpticalDensityForWavelength(
+              data.opticalDensity,
+              this.waveLengths[key]
+            );
+            return null;
+          });
         }
 
-        return {
-          dilution,
-          primary,
-          secondary,
-          opticalDensity
-        };
+        return data;
+
+        // return {
+        //   dilution,
+        //   primary,
+        //   secondary,
+        //   opticalDensity
+        // };
       });
       return null;
     });
@@ -191,7 +224,7 @@ class App extends React.Component {
           time: 0,
           phases: {
             ...phases,
-            [phase]: [...phases[phase], 0] 
+            [phase]: [...phases[phase], 0]
           }
         },
         () => this.genAssay()
@@ -211,13 +244,16 @@ class App extends React.Component {
 
     phaseTimes.pop(); // remove previous counter is already waiting
 
-    this.setState({ 
-      time: stamp,
-      phases: {
-      ...phases,
-      [phase]: [...phaseTimes, time]
-      }
-     }, () => this.genAssay());
+    this.setState(
+      {
+        time: stamp,
+        phases: {
+          ...phases,
+          [phase]: [...phaseTimes, time]
+        }
+      },
+      () => this.genAssay()
+    );
   }
 
   handleSelectSample(key, subject) {
@@ -226,19 +262,31 @@ class App extends React.Component {
   }
 
   handleSelectPlate(plate) {
-    this.setState({ plate }, () => this.genAssay());
+    this.setState(
+      {
+        plate,
+        phase: "primaryExposure"
+      },
+      () => this.genAssay()
+    );
   }
 
   handleWait() {
-    const { phase, phases, waitOn } = this.state;
-    const hasPrimaryExposure = phases["primaryExposure"].length > 0;
-    const hasPrimaryWash = phases["primaryWash"].length > 0;
-    //const hasSecondaryExposure = phases['secondaryExposure'].length > 0;
+    const { phase, waitOn } = this.state;
+    if (!phase) return;
+    // const hasPrimaryExposure = phases["primaryExposure"].length > 0;
+    // const hasPrimaryWash = phases["primaryWash"].length > 0;
+    // const hasSecondaryExposure = phases["secondaryExposure"].length > 0;
+    // const hasSecondaryWash = phases["secondaryWash"].length > 0;
     let newPhase = phase;
 
-    if (hasPrimaryExposure && hasPrimaryWash) {
-      newPhase = "secondaryExposure";
-    }
+    // if (hasPrimaryWash && !hasPrimaryExposure) {
+    //   newPhase = "primaryExposure";
+    // }
+
+    // if (hasPrimaryExposure && hasPrimaryWash && !hasSecondaryWash) {
+    //   newPhase = "secondaryExposure";
+    // }
 
     this.setState(
       {
@@ -251,11 +299,18 @@ class App extends React.Component {
 
   handleWash() {
     const { phase, phases, washOn } = this.state;
+    const hasPrimaryExposure = phases["primaryExposure"].length > 0;
     const hasPrimaryWash = phases["primaryWash"].length > 0;
-    let newPhase = phase;
+    const hasSecondaryExposure = phases["secondaryExposure"].length > 0;
+    const hasSecondaryWash = phases["secondaryWash"].length > 0;
+    let newPhase = !phase ? "primaryWash" : phase;
 
-    if (!hasPrimaryWash) {
+    if (hasPrimaryExposure && !hasPrimaryWash) {
       newPhase = "primaryWash";
+    }
+
+    if (hasSecondaryExposure && !hasSecondaryWash) {
+      newPhase = "secondaryWash";
     }
 
     this.setState(
@@ -277,6 +332,13 @@ class App extends React.Component {
   handleSelectSecondaryAntibody(key) {
     this.setState({
       secondaryAntibody: this.secondaryAntibodies[key]
+    });
+  }
+
+  handleSelectChromagen(color) {
+    this.setState({
+      chromagen: color,
+      phase: "chromagenExposure"
     });
   }
 
@@ -451,6 +513,29 @@ class App extends React.Component {
 
         <hr />
 
+        <fieldset>
+          <legend>Step 5</legend>
+          <label>
+            Set Chromagen
+            <select onChange={e => this.handleSelectChromagen(e.target.value)}>
+              <option>select..</option>
+              {Object.keys(this.chromagens).map(key => (
+                <option value={this.chromagens[key]}>{key}</option>
+              ))}
+            </select>
+          </label>
+
+          <div
+            style={{
+              width: "1rem",
+              height: "1rem",
+              backgroundColor: this.state.chromagen
+            }}
+          />
+        </fieldset>
+
+        <hr />
+
         <div style={{ maxWidth: "100%" }}>
           <ResultTable
             property="dilution"
@@ -472,11 +557,25 @@ class App extends React.Component {
             title="Secondary Exposure"
             selectedSamples={selectedSamples}
           />
-                    <ResultTable
+          <ResultTable
             property="opticalDensity"
             assay={assay}
-            title="OpticalDensity"
+            title="Optical Density"
             selectedSamples={selectedSamples}
+          />
+          <ResultTable
+            property="opacity"
+            assay={assay}
+            title="Opacity"
+            selectedSamples={selectedSamples}
+          />
+        </div>
+
+        <div style={{ maxWidth: "500px" }}>
+          <AssaySvg
+            assay={assay}
+            fillColor={this.state.chromagen}
+            acid={false}
           />
         </div>
       </div>
