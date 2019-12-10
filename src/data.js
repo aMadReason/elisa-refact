@@ -13,15 +13,28 @@ export const config = {
       microPerMil: 500
     }
   },
-  wavelengths: {
-    "450nm": "1.0",
-    "520nm": "0.4",
-    "544nm": "0.2",
-    "590nm": "0.14",
-    "645nm": "0.11"
-  },
+  usedWavelengths: ["450nm", "520nm", "544nm", "590nm", "645nm"],
   chromagens: {
-    "chromagen-1": "blue"
+    "chromagen-1": {
+      color: "blue",
+      wavelengths: {
+        "450nm": 1.0,
+        "520nm": 0.4,
+        "544nm": 0.2,
+        "590nm": 0.14,
+        "645nm": 0.11
+      }
+    },
+    "chromagen-2": {
+      color: "red",
+      wavelengths: {
+        "450nm": 0.11,
+        "520nm": 0.14,
+        "544nm": 0.2,
+        "590nm": 0.1,
+        "645nm": 1.0
+      }
+    }
   }
 };
 

@@ -27,7 +27,7 @@ class App extends React.Component {
     super(props);
     this.samples = props.samples;
     this.plates = this.props.plates || Object.keys(props.samples[0].plates);
-    this.wavelengths = this.props.wavelengths || {};
+    this.usedWavelengths = this.props.usedWavelengths || {};
     this.secondaryAntibodies = this.props.secondaryAntibodies || {};
     this.chromagens = props.chromagens || { default: "blue" };
 
@@ -139,7 +139,7 @@ class App extends React.Component {
         };
 
         // add wavelengths to data
-        Object.keys(this.wavelengths).map(key => (data[key] = 0));
+        this.usedWavelengths.map(key => (data[key] = 0));
 
         // calc primary
         if (i > 0 && phases["primaryExposure"].length > 0) {
@@ -180,10 +180,10 @@ class App extends React.Component {
             sumInt(phases["chromagenExposure"])
           );
           data.opacity = calcOpacity(data.opticalDensity);
-          Object.keys(this.wavelengths).map(key => {
+          Object.keys(this.state.chromagen.wavelengths).map(key => {
             data[key] = calcOpticalDensityForWavelength(
               data.opticalDensity,
-              this.wavelengths[key]
+              this.state.chromagen.wavelengths[key]
             );
             return null;
           });
@@ -333,9 +333,9 @@ class App extends React.Component {
     });
   }
 
-  handleSelectChromagen(color) {
+  handleSelectChromagen(key) {
     this.setState({
-      chromagen: color,
+      chromagen: this.chromagens[key],
       phase: "chromagenExposure"
     });
   }
@@ -352,12 +352,16 @@ class App extends React.Component {
       phases,
       selectedSamples,
       phase,
-      secondaryAntibody
+      secondaryAntibody,
+      chromagen
     } = this.state;
     const sampleKeys = Object.keys(assay);
     const dilutionFactor = calcDilutionFactor(this.state.inputVolume);
     const primaryWashResidue = calcWashResidueFromTimes(
       phases["primaryWash"] || []
+    );
+    const secondaryWashResidue = calcWashResidueFromTimes(
+      phases["secondaryWash"] || []
     );
 
     const concentration = !secondaryAntibody
@@ -366,8 +370,6 @@ class App extends React.Component {
           +this.state.inputConcentration,
           secondaryAntibody.microPerMil
         );
-
-    console.log(assay);
 
     return (
       <div>
@@ -444,7 +446,7 @@ class App extends React.Component {
         <hr />
 
         <fieldset>
-          <legend>Step 2: Dilution</legend>
+          <legend>Set Dilution</legend>
           Volume to transfer in a dilution series{" "}
           <input
             type="number"
@@ -457,7 +459,7 @@ class App extends React.Component {
         <hr />
 
         <fieldset>
-          <legend>Step 1: Select Patients</legend>
+          <legend>Select Patients</legend>
           {sampleKeys.map(i => (
             <div key={i}>
               Select Patient {i.toLocaleUpperCase()}{" "}
@@ -473,30 +475,57 @@ class App extends React.Component {
         <hr />
 
         <fieldset>
-          <legend>Step 3.2: Primary Antibody Exposure & wash</legend>
+          <legend>Primary Exposure & wash</legend>
           <div>
-            Number of washes:{" "}
-            {Array.isArray(phases.primaryWash)
-              ? phases.primaryWash.filter(i => i).length
-              : 0}
+            Primary Exposure:{" "}
+            {phases.primaryExposure
+              .filter(i => i)
+              .reduce((acc, cur) => acc + timeToMins(cur), 0)}
+          </div>
+          <div>
+            Number of washes: {0 + phases.primaryWash.filter(i => i).length}
           </div>
           Primary Wash Residue: {roundPrecision(primaryWashResidue, 3)}
           <ul>
-            {Array.isArray(phases.primaryWash) &&
-              phases.primaryWash
-                .filter(i => i)
-                .map((i, idx) => (
-                  <li key={idx}>
-                    Wash {idx + 1} {timeToMins(i)}
-                  </li>
-                ))}
+            {phases.primaryWash
+              .filter(i => i)
+              .map((i, idx) => (
+                <li key={idx}>
+                  Wash {idx + 1} {timeToMins(i)}
+                </li>
+              ))}
+          </ul>
+        </fieldset>
+
+        <fieldset>
+          <legend>Secondary Exposure & Wash</legend>
+          <div>
+            Secondary Exposure:{" "}
+            {phases.secondaryExposure
+              .filter(i => i)
+              .reduce((acc, cur) => acc + timeToMins(cur), 0)}
+          </div>
+          <div>
+            Number of washes: {0 + phases.secondaryWash.filter(i => i).length}
+          </div>
+          Primary Wash Residue: {roundPrecision(secondaryWashResidue, 3)}
+          <ul>
+            {phases.secondaryWash
+              .filter(i => i)
+              .map((i, idx) => (
+                <li key={idx}>
+                  Wash {idx + 1} {timeToMins(i)}
+                </li>
+              ))}
           </ul>
         </fieldset>
 
         <hr />
 
         <fieldset>
-          <legend>Step 4</legend>
+          <legend>
+            Select secondary agent (antibody/antigen) & Concentration
+          </legend>
           <label>
             <select
               onChange={e => this.handleSelectSecondaryAntibody(e.target.value)}
@@ -522,24 +551,28 @@ class App extends React.Component {
         <hr />
 
         <fieldset>
-          <legend>Step 5</legend>
+          <legend>Chromagen</legend>
           <label>
             Set Chromagen
             <select onChange={e => this.handleSelectChromagen(e.target.value)}>
               <option>select..</option>
               {Object.keys(this.chromagens).map(key => (
-                <option key={key} value={this.chromagens[key]}>
+                <option key={key} value={key}>
                   {key}
                 </option>
               ))}
             </select>
           </label>
 
+          <div>
+            {chromagen && JSON.stringify(chromagen.wavelengths, null, 2)}
+          </div>
+
           <div
             style={{
               width: "1rem",
               height: "1rem",
-              backgroundColor: this.state.chromagen
+              backgroundColor: chromagen ? chromagen.color : "transparent"
             }}
           />
         </fieldset>
@@ -584,12 +617,12 @@ class App extends React.Component {
         <div style={{ maxWidth: "500px" }}>
           <AssaySvg
             assay={assay}
-            fillColor={this.state.chromagen}
+            fillColor={chromagen && chromagen.color}
             acid={this.state.acidApplied}
           />
         </div>
 
-        {Object.keys(this.wavelengths).map(key => (
+        {this.usedWavelengths.map(key => (
           <ResultTable
             key={key}
             property={key}
