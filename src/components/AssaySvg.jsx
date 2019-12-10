@@ -81,39 +81,14 @@ const style = () => `
 
 function AssaySvg(props) {
   const { assay, acid, fillColor } = props;
-  // const assay = {
-  //   a: [],
-  //   b: [],
-  //   c: [],
-  //   d: [],
-  //   e: [],
-  //   f: [],
-  //   g: [],
-  //   h: []
-  // };
-
-  // values.map((val, i) => {
-  //   if (i === 0) assay["a"] = val;
-  //   if (i === 1) assay["b"] = val;
-  //   if (i === 2) assay["c"] = val;
-  //   if (i === 3) assay["d"] = val;
-  //   if (i === 4) assay["e"] = val;
-  //   if (i === 5) assay["f"] = val;
-  //   if (i === 6) assay["g"] = val;
-  //   if (i === 7) assay["h"] = val;
-  //   return undefined;
-  // });
 
   Object.keys(assay).map(key => {
     if (assay[key].length === 0)
       assay[key] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    return null;
   });
 
-  console.log(assay);
-
   const fill = acid ? "yellow" : fillColor;
-
-  console.log(assay);
 
   return (
     <svg version="1.1" viewBox="0 0 508.45 345.93">
