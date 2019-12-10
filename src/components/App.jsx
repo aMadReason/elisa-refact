@@ -27,7 +27,7 @@ class App extends React.Component {
     super(props);
     this.samples = props.samples;
     this.plates = this.props.plates || Object.keys(props.samples[0].plates);
-    this.waveLengths = this.props.waveLengths || {};
+    this.wavelengths = this.props.wavelengths || {};
     this.secondaryAntibodies = this.props.secondaryAntibodies || {};
     this.chromagens = props.chromagens || { default: "blue" };
 
@@ -40,13 +40,10 @@ class App extends React.Component {
       phase: null,
       chromgen: null,
       inputVolume: 100,
-      //dilutionFactor: null,
       inputConcentration: 0,
       timer: null,
       timerOn: false,
-      time: 0, // in seconds
-      // actualStamp: 0,
-      // displayStamp: 0,
+      time: 0, // in milseconds
       waitOn: false,
       washOn: false,
       secondaryAntibody: null,
@@ -141,6 +138,9 @@ class App extends React.Component {
           opacity: 0
         };
 
+        // add wavelengths to data
+        Object.keys(this.wavelengths).map(key => (data[key] = 0));
+
         // calc primary
         if (i > 0 && phases["primaryExposure"].length > 0) {
           //data.primary = data.primary * this.state.primaryEfficiencyFactor;
@@ -167,7 +167,10 @@ class App extends React.Component {
           );
 
           if (this.variancePercent > 0) {
-            data.secondary + calcVariance(data.secondary, this.variancePercent);
+            return (
+              data.secondary +
+              calcVariance(data.secondary, this.variancePercent)
+            );
           }
         }
 
@@ -177,29 +180,21 @@ class App extends React.Component {
             sumInt(phases["chromagenExposure"])
           );
           data.opacity = calcOpacity(data.opticalDensity);
-          Object.keys(this.waveLengths).map(key => {
+          Object.keys(this.wavelengths).map(key => {
             data[key] = calcOpticalDensityForWavelength(
               data.opticalDensity,
-              this.waveLengths[key]
+              this.wavelengths[key]
             );
             return null;
           });
         }
 
         return data;
-
-        // return {
-        //   dilution,
-        //   primary,
-        //   secondary,
-        //   opticalDensity
-        // };
       });
       return null;
     });
 
     this.setState({ assay: result });
-
     return result;
   }
 
@@ -274,19 +269,8 @@ class App extends React.Component {
   handleWait() {
     const { phase, waitOn } = this.state;
     if (!phase) return;
-    // const hasPrimaryExposure = phases["primaryExposure"].length > 0;
-    // const hasPrimaryWash = phases["primaryWash"].length > 0;
-    // const hasSecondaryExposure = phases["secondaryExposure"].length > 0;
-    // const hasSecondaryWash = phases["secondaryWash"].length > 0;
+
     let newPhase = phase;
-
-    // if (hasPrimaryWash && !hasPrimaryExposure) {
-    //   newPhase = "primaryExposure";
-    // }
-
-    // if (hasPrimaryExposure && hasPrimaryWash && !hasSecondaryWash) {
-    //   newPhase = "secondaryExposure";
-    // }
 
     this.setState(
       {
@@ -335,6 +319,20 @@ class App extends React.Component {
     });
   }
 
+  handleAcid() {
+    const { phase, phases } = this.state;
+    this.setState({
+      acidApplied: true,
+      timerOn: false,
+      timer: clearInterval(this.state.timer),
+      time: 0,
+      phases: {
+        ...phases,
+        [phase]: [...phases[phase], 0]
+      }
+    });
+  }
+
   handleSelectChromagen(color) {
     this.setState({
       chromagen: color,
@@ -368,6 +366,8 @@ class App extends React.Component {
           +this.state.inputConcentration,
           secondaryAntibody.microPerMil
         );
+
+    console.log(assay);
 
     return (
       <div>
@@ -417,6 +417,14 @@ class App extends React.Component {
           </button>
 
           <span>{timeToMins(time)} mins</span>
+
+          <button
+            style={{ float: "right" }}
+            disabled={acidApplied}
+            onClick={({ nativeEvent }) => this.handleAcid()}
+          >
+            Apply Acid
+          </button>
         </div>
 
         <hr />
@@ -520,7 +528,9 @@ class App extends React.Component {
             <select onChange={e => this.handleSelectChromagen(e.target.value)}>
               <option>select..</option>
               {Object.keys(this.chromagens).map(key => (
-                <option value={this.chromagens[key]}>{key}</option>
+                <option key={key} value={this.chromagens[key]}>
+                  {key}
+                </option>
               ))}
             </select>
           </label>
@@ -575,9 +585,19 @@ class App extends React.Component {
           <AssaySvg
             assay={assay}
             fillColor={this.state.chromagen}
-            acid={false}
+            acid={this.state.acidApplied}
           />
         </div>
+
+        {Object.keys(this.wavelengths).map(key => (
+          <ResultTable
+            key={key}
+            property={key}
+            assay={assay}
+            title={key}
+            selectedSamples={selectedSamples}
+          />
+        ))}
       </div>
     );
   }
