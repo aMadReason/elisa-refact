@@ -15,7 +15,8 @@ import {
   calcVariance,
   calcOpticalDensity,
   calcOpacity,
-  calcOpticalDensityForWavelength
+  calcOpticalDensityForWavelength,
+  toNumber
 } from "../modules/functions";
 
 import SampleSelect from "./SampleSelect";
@@ -34,6 +35,10 @@ class App extends React.Component {
     this.state = {
       primaryEfficiencyFactor: 1.0,
       variancePercent: 0, //4,
+      dilutionModifier: 100,
+      outputVolumeInMicrolitre: 10000,
+      milisecondsBetweenTicks: 150,
+      addSecondsPerTick: 20,
 
       acidApplies: false,
       plate: null,
@@ -89,23 +94,28 @@ class App extends React.Component {
       phases,
       secondaryAntibody,
       selectedSamples,
-      primaryEfficiencyFactor
+      primaryEfficiencyFactor,
+      inputVolume,
+      dilutionModifier,
+      inputConcentration,
+      outputVolumeInMicrolitre
     } = this.state;
 
     const result = { ...assay };
-    const microPerMil = secondaryAntibody ? secondaryAntibody.microPerMil : 0;
+    const stockMicrogramPerMillilitre = secondaryAntibody
+      ? secondaryAntibody.stockMicrogramPerMillilitre
+      : 0;
     const binding = secondaryAntibody ? secondaryAntibody.binding : 0;
     const efficiency = secondaryAntibody ? secondaryAntibody.efficiency : 0;
     const plates = secondaryAntibody ? secondaryAntibody.plates : [];
     const concentration = calcConcentrationFactor(
-      +this.state.inputConcentration,
-      microPerMil
+      inputConcentration,
+      stockMicrogramPerMillilitre,
+      outputVolumeInMicrolitre
     );
-    const dilutionFactor = calcDilutionFactor(this.state.inputVolume);
+    const dilutionFactor = calcDilutionFactor(inputVolume, dilutionModifier);
     const primaryWashResidue = calcWashResidueFromTimes(phases["primaryWash"]);
-    const secondaryWashResidue = calcWashResidueFromTimes(
-      phases["secondaryWash"]
-    );
+    const secondaryWashResidue = calcWashResidueFromTimes(phases["secondaryWash"]);
     let antibodyEff = efficiency;
 
     if (secondaryAntibody) {
@@ -121,11 +131,7 @@ class App extends React.Component {
       let series = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
       if (selectedSamples[key] && plate && dilutionFactor) {
         const value = selectedSamples[key].plates[plate] / 10;
-        series = calcDilutionSeries(
-          value,
-          dilutionFactor,
-          primaryEfficiencyFactor
-        );
+        series = calcDilutionSeries(value, dilutionFactor, primaryEfficiencyFactor);
       }
 
       // loop over series
@@ -150,27 +156,12 @@ class App extends React.Component {
 
         // calc secondary
         if (phases["secondaryExposure"].length > 0) {
-          data.secondary = calcBoundAntibody(
-            data.primary,
-            concentration,
-            antibodyEff,
-            binding
-          );
-          data.secondary = timeModifier(
-            data.secondary,
-            sumInt(phases["secondaryExposure"])
-          );
-          data.secondary = washModifierSecondary(
-            data.secondary,
-            secondaryWashResidue,
-            binding
-          );
+          data.secondary = calcBoundAntibody(data.primary, concentration, antibodyEff, binding);
+          data.secondary = timeModifier(data.secondary, sumInt(phases["secondaryExposure"]));
+          data.secondary = washModifierSecondary(data.secondary, secondaryWashResidue, binding);
 
-          if (this.variancePercent > 0) {
-            return (
-              data.secondary +
-              calcVariance(data.secondary, this.variancePercent)
-            );
+          if (this.state.variancePercent > 0) {
+            return data.secondary + calcVariance(data.secondary, this.variancePercent);
           }
         }
 
@@ -200,9 +191,7 @@ class App extends React.Component {
 
   selectSample(key, subject) {
     const { selectedSamples } = this.state;
-    const sample = this.samples.find(
-      i => i.subject.toString() === subject.toString()
-    );
+    const sample = this.samples.find(i => i.subject.toString() === subject.toString());
     selectedSamples[key] = sample;
     return selectedSamples;
   }
@@ -228,13 +217,13 @@ class App extends React.Component {
 
     this.setState({
       timerOn: true,
-      timer: setInterval(action, 150)
+      timer: setInterval(action, this.state.milisecondsBetweenTicks)
     });
   }
 
   wait() {
-    const { time, phases, phase } = this.state;
-    const stamp = time + 20 * 1000;
+    const { time, phases, phase, addSecondsPerTick } = this.state;
+    const stamp = time + addSecondsPerTick * 1000;
     const phaseTimes = [...phases[phase]];
 
     phaseTimes.pop(); // remove previous counter is already waiting
@@ -353,46 +342,82 @@ class App extends React.Component {
       selectedSamples,
       phase,
       secondaryAntibody,
-      chromagen
+      chromagen,
+      inputVolume,
+      dilutionModifier,
+      inputConcentration,
+      outputVolumeInMicrolitre
     } = this.state;
     const sampleKeys = Object.keys(assay);
-    const dilutionFactor = calcDilutionFactor(this.state.inputVolume);
-    const primaryWashResidue = calcWashResidueFromTimes(
-      phases["primaryWash"] || []
-    );
-    const secondaryWashResidue = calcWashResidueFromTimes(
-      phases["secondaryWash"] || []
-    );
+    const dilutionFactor = calcDilutionFactor(inputVolume, dilutionModifier);
+    const primaryWashResidue = calcWashResidueFromTimes(phases["primaryWash"] || []);
+    const secondaryWashResidue = calcWashResidueFromTimes(phases["secondaryWash"] || []);
+    let concentration = 0;
 
-    const concentration = !secondaryAntibody
-      ? 0
-      : calcConcentrationFactor(
-          +this.state.inputConcentration,
-          secondaryAntibody.microPerMil
-        );
+    if (secondaryAntibody) {
+      concentration = calcConcentrationFactor(
+        inputConcentration,
+        secondaryAntibody.stockMicrogramPerMillilitre,
+        outputVolumeInMicrolitre
+      );
+    }
 
     return (
       <div>
         <fieldset>
           <legend>Developer Constants</legend>
           <label>
+            Miliseconds between ticks{" "}
+            <input
+              type="number"
+              min="150"
+              max="1000"
+              defaultValue={this.state.milisecondsBetweenTicks}
+              onInput={e => this.setState({ milisecondsBetweenTicks: toNumber(e.target.value) })}
+            />
+          </label>
+          <label>
+            Add Seconds at each tick{" "}
+            <input
+              type="number"
+              min="0"
+              max="60"
+              defaultValue={this.state.addSecondsPerTick}
+              onInput={e => this.setState({ addSecondsPerTick: toNumber(e.target.value) })}
+            />
+          </label>{" "}
+          <label>
             Primary Efficiency Factor{" "}
             <input
-              type="text"
+              type="number"
               defaultValue={this.state.primaryEfficiencyFactor}
-              onInput={e =>
-                this.setState({ primaryEfficiencyFactor: e.target.value })
-              }
+              onInput={e => this.setState({ primaryEfficiencyFactor: toNumber(e.target.value) })}
             />
           </label>{" "}
           <label>
             Variance (result wobble){" "}
             <input
-              type="text"
+              type="number"
               defaultValue={this.state.variancePercent}
-              onInput={e => this.setState({ variancePercent: e.target.value })}
+              onInput={e => this.setState({ variancePercent: toNumber(e.target.value) })}
             />
             %
+          </label>
+          <label>
+            Dilution Modifier{" "}
+            <input
+              type="number"
+              defaultValue={this.state.dilutionModifier}
+              onInput={e => this.setState({ dilutionModifier: toNumber(e.target.value) })}
+            />
+          </label>
+          <label>
+            Ouput volume in <abbr title="microlitre">μl</abbr>{" "}
+            <input
+              type="number"
+              defaultValue={this.state.outputVolumeInMicrolitre}
+              onInput={e => this.setState({ outputVolumeInMicrolitre: toNumber(e.target.value) })}
+            />
           </label>
           <div>
             <strong>Phase: </strong>
@@ -450,8 +475,10 @@ class App extends React.Component {
           Volume to transfer in a dilution series{" "}
           <input
             type="number"
+            min="0"
+            max="100"
             defaultValue={this.state.inputVolume}
-            onInput={e => this.setState({ inputVolume: e.target.value })}
+            onInput={e => this.setState({ inputVolume: toNumber(e.target.value) })}
           />{" "}
           {dilutionFactor && <small>Dilution Factor: {dilutionFactor}</small>}
         </fieldset>
@@ -478,13 +505,9 @@ class App extends React.Component {
           <legend>Primary Exposure & wash</legend>
           <div>
             Primary Exposure:{" "}
-            {phases.primaryExposure
-              .filter(i => i)
-              .reduce((acc, cur) => acc + timeToMins(cur), 0)}
+            {phases.primaryExposure.filter(i => i).reduce((acc, cur) => acc + timeToMins(cur), 0)}
           </div>
-          <div>
-            Number of washes: {0 + phases.primaryWash.filter(i => i).length}
-          </div>
+          <div>Number of washes: {0 + phases.primaryWash.filter(i => i).length}</div>
           Primary Wash Residue: {roundPrecision(primaryWashResidue, 3)}
           <ul>
             {phases.primaryWash
@@ -501,13 +524,9 @@ class App extends React.Component {
           <legend>Secondary Exposure & Wash</legend>
           <div>
             Secondary Exposure:{" "}
-            {phases.secondaryExposure
-              .filter(i => i)
-              .reduce((acc, cur) => acc + timeToMins(cur), 0)}
+            {phases.secondaryExposure.filter(i => i).reduce((acc, cur) => acc + timeToMins(cur), 0)}
           </div>
-          <div>
-            Number of washes: {0 + phases.secondaryWash.filter(i => i).length}
-          </div>
+          <div>Number of washes: {0 + phases.secondaryWash.filter(i => i).length}</div>
           Primary Wash Residue: {roundPrecision(secondaryWashResidue, 3)}
           <ul>
             {phases.secondaryWash
@@ -523,13 +542,9 @@ class App extends React.Component {
         <hr />
 
         <fieldset>
-          <legend>
-            Select secondary agent (antibody/antigen) & Concentration
-          </legend>
+          <legend>Select secondary agent (antibody/antigen) & Concentration</legend>
           <label>
-            <select
-              onChange={e => this.handleSelectSecondaryAntibody(e.target.value)}
-            >
+            <select onChange={e => this.handleSelectSecondaryAntibody(e.target.value)}>
               <option>select..</option>
               {Object.keys(this.secondaryAntibodies).map(k => (
                 <option value={k} key={k}>
@@ -542,8 +557,10 @@ class App extends React.Component {
           <br />
           <input
             type="number"
+            min="0"
+            max="100"
             defaultValue={this.state.secondaryInputVolume}
-            onInput={e => this.handleConcentrationInput(e.target.value)}
+            onInput={e => this.handleConcentrationInput(toNumber(e.target.value))}
           />{" "}
           concentration: {concentration}
         </fieldset>
@@ -564,9 +581,7 @@ class App extends React.Component {
             </select>
           </label>
 
-          <div>
-            {chromagen && JSON.stringify(chromagen.wavelengths, null, 2)}
-          </div>
+          <div>{chromagen && JSON.stringify(chromagen.wavelengths, null, 2)}</div>
 
           <div
             style={{

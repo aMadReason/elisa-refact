@@ -1,8 +1,16 @@
+export function toNumber(str) {
+  const type = typeof str;
+  if (type === "number") return str;
+  if (type === "string") return Number(str.replace(/[^\d.-]/g, ""));
+  return 0;
+}
+
 export function calcConcentrationFactor(
-  volume,
-  initialConcentration = 500 // microgramPerMil
+  volumeInMillilitre,
+  stockMicrogramPerMillilitre = 500,
+  outputVolumeInMicrolitre = 10000
 ) {
-  return (initialConcentration * volume) / 10000; // gives final concentration micrograms per mil
+  return (stockMicrogramPerMillilitre * volumeInMillilitre) / outputVolumeInMicrolitre; // gives final concentration micrograms per mil
 }
 
 export function sumInt(args) {
@@ -29,16 +37,12 @@ export function washModifierSecondary(value, washResidue, binding) {
   return output;
 }
 
-export function calcDilutionFactor(volume) {
-  const vol = +volume; // make sure it's not a string
-  return (100 + vol) / vol;
+export function calcDilutionFactor(volume, dilutionModifier = 100) {
+  const vol = Number(volume); // make sure it's not a string
+  return (Number(dilutionModifier) + vol) / vol;
 }
 
-export function calcDilutionSeries(
-  value = 0,
-  dilutionFactor = 1.0,
-  efficiencyFactor = 1.0
-) {
+export function calcDilutionSeries(value = 0, dilutionFactor = 1.0, efficiencyFactor = 1.0) {
   const values = [+value];
   for (let i = 1; i < 12; i++) {
     let val = (values[i - 1] / +dilutionFactor) * efficiencyFactor;
@@ -62,9 +66,7 @@ export function calcVariance(value, percent = 8, toFixed = 2) {
 export const roundPrecision = (num, dec) => {
   if (typeof num !== "number" || typeof dec !== "number") return false;
   const numSign = num >= 0 ? 1 : -1;
-  return (
-    Math.round(num * Math.pow(10, dec) + numSign * 0.0001) / Math.pow(10, dec)
-  ).toFixed(dec);
+  return (Math.round(num * Math.pow(10, dec) + numSign * 0.0001) / Math.pow(10, dec)).toFixed(dec);
 };
 
 export function timeModifier(value, timesInMilSec) {
@@ -91,9 +93,7 @@ export function calcWashResidue(washEfficiencies = []) {
 }
 
 export function calcWashResidueFromTimes(time = []) {
-  const washEffiencies = time
-    .filter(i => i)
-    .map(t => calclateWashEfficiency(t));
+  const washEffiencies = time.filter(i => i).map(t => calclateWashEfficiency(t));
 
   const residue = calcWashResidue(washEffiencies);
   return residue;
@@ -105,10 +105,7 @@ export function calcOpticalDensity(value, time) {
   //return Math.min(0.03 + (seconds / 100) * value, 2);
 }
 
-export function calcOpticalDensityForWavelength(
-  opticalDensityValue,
-  wavelengthModifier
-) {
+export function calcOpticalDensityForWavelength(opticalDensityValue, wavelengthModifier) {
   return opticalDensityValue * wavelengthModifier;
 }
 
