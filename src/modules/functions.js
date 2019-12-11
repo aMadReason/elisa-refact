@@ -1,7 +1,7 @@
-export function toNumber(str) {
+export function castToNum(str) {
   const type = typeof str;
-  if (type === "number") return str;
-  if (type === "string") return Number(str.replace(/[^\d.-]/g, ""));
+  if (str && type === "number") return str;
+  if (str && type === "string") return Number(str.replace(/[^\d.-]/g, ""));
   return 0;
 }
 

@@ -16,7 +16,7 @@ import {
   calcOpticalDensity,
   calcOpacity,
   calcOpticalDensityForWavelength,
-  toNumber
+  castToNum
 } from "../modules/functions";
 
 import SampleSelect from "./SampleSelect";
@@ -160,8 +160,8 @@ class App extends React.Component {
           data.secondary = timeModifier(data.secondary, sumInt(phases["secondaryExposure"]));
           data.secondary = washModifierSecondary(data.secondary, secondaryWashResidue, binding);
 
-          if (this.state.variancePercent > 0) {
-            return data.secondary + calcVariance(data.secondary, this.variancePercent);
+          if (this.state.variancePercent && this.state.variancePercent > 0) {
+            data.secondary = data.secondary + calcVariance(data.secondary, this.variancePercent);
           }
         }
 
@@ -329,6 +329,14 @@ class App extends React.Component {
     });
   }
 
+  // Removes invalid characters
+  handleNumberBlur(e, key) {
+    const target = e.target;
+    const value = castToNum(target.value);
+    target.value = value;
+    this.setState({ [key]: value });
+  }
+
   render() {
     const {
       acidApplied,
@@ -369,11 +377,10 @@ class App extends React.Component {
           <label>
             Miliseconds between ticks{" "}
             <input
-              type="number"
-              min="150"
-              max="1000"
+              type="text"
               defaultValue={this.state.milisecondsBetweenTicks}
-              onInput={e => this.setState({ milisecondsBetweenTicks: toNumber(e.target.value) })}
+              onBlur={e => this.handleNumberBlur(e, "milisecondsBetweenTicks")}
+              onInput={e => this.setState({ milisecondsBetweenTicks: castToNum(e.target.value) })}
             />
           </label>
           <label>
@@ -383,7 +390,8 @@ class App extends React.Component {
               min="0"
               max="60"
               defaultValue={this.state.addSecondsPerTick}
-              onInput={e => this.setState({ addSecondsPerTick: toNumber(e.target.value) })}
+              onBlur={e => this.handleNumberBlur(e, "addSecondsPerTick")}
+              onInput={e => this.setState({ addSecondsPerTick: castToNum(e.target.value) })}
             />
           </label>{" "}
           <label>
@@ -391,7 +399,8 @@ class App extends React.Component {
             <input
               type="number"
               defaultValue={this.state.primaryEfficiencyFactor}
-              onInput={e => this.setState({ primaryEfficiencyFactor: toNumber(e.target.value) })}
+              onBlur={e => this.handleNumberBlur(e, "primaryEfficiencyFactor")}
+              onInput={e => this.setState({ primaryEfficiencyFactor: castToNum(e.target.value) })}
             />
           </label>{" "}
           <label>
@@ -399,7 +408,8 @@ class App extends React.Component {
             <input
               type="number"
               defaultValue={this.state.variancePercent}
-              onInput={e => this.setState({ variancePercent: toNumber(e.target.value) })}
+              onBlur={e => this.handleNumberBlur(e, "primaryEfficiencyFactor")}
+              onInput={e => this.setState({ variancePercent: castToNum(e.target.value) })}
             />
             %
           </label>
@@ -408,7 +418,8 @@ class App extends React.Component {
             <input
               type="number"
               defaultValue={this.state.dilutionModifier}
-              onInput={e => this.setState({ dilutionModifier: toNumber(e.target.value) })}
+              onBlur={e => this.handleNumberBlur(e, "dilutionModifier")}
+              onInput={e => this.setState({ dilutionModifier: castToNum(e.target.value) })}
             />
           </label>
           <label>
@@ -416,7 +427,8 @@ class App extends React.Component {
             <input
               type="number"
               defaultValue={this.state.outputVolumeInMicrolitre}
-              onInput={e => this.setState({ outputVolumeInMicrolitre: toNumber(e.target.value) })}
+              onBlur={e => this.handleNumberBlur(e, "outputVolumeInMicrolitre")}
+              onInput={e => this.setState({ outputVolumeInMicrolitre: castToNum(e.target.value) })}
             />
           </label>
           <div>
@@ -478,7 +490,8 @@ class App extends React.Component {
             min="0"
             max="100"
             defaultValue={this.state.inputVolume}
-            onInput={e => this.setState({ inputVolume: toNumber(e.target.value) })}
+            onBlur={e => this.handleNumberBlur(e, "inputVolume")}
+            onInput={e => this.setState({ inputVolume: castToNum(e.target.value) })}
           />{" "}
           {dilutionFactor && <small>Dilution Factor: {dilutionFactor}</small>}
         </fieldset>
@@ -560,7 +573,8 @@ class App extends React.Component {
             min="0"
             max="100"
             defaultValue={this.state.secondaryInputVolume}
-            onInput={e => this.handleConcentrationInput(toNumber(e.target.value))}
+            onBlur={e => this.handleNumberBlur(e, "secondaryInputVolume")}
+            onInput={e => this.handleConcentrationInput(castToNum(e.target.value))}
           />{" "}
           concentration: {concentration}
         </fieldset>

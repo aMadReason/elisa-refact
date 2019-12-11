@@ -4,8 +4,7 @@ export const config = {
     "test-a": {
       efficiency: 1,
       binding: 0.04,
-      stockMicrogramPerMillilitre: 500,
-      microPerMil: 500
+      stockMicrogramPerMillilitre: 500
     },
     "test-b": {
       plates: ["RNP"],
