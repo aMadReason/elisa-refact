@@ -19,7 +19,7 @@ import {
   castToNum
 } from "../modules/functions";
 
-import SampleSelect from "./SampleSelect";
+//import SampleSelect from "./SampleSelect";
 import ResultTable from "./ResultTable";
 import AssaySvg from "./AssaySvg";
 
@@ -29,7 +29,7 @@ class App extends React.Component {
     this.samples = props.samples;
     this.plates = this.props.plates || Object.keys(props.samples[0].plates);
     this.usedWavelengths = this.props.usedWavelengths || {};
-    this.secondaryAntibodies = this.props.secondaryAntibodies || {};
+    this.secondaryAntibodies = this.props.secondaryAntibodies || [];
     this.chromagens = props.chromagens || { default: "blue" };
 
     this.state = {
@@ -57,7 +57,7 @@ class App extends React.Component {
         primaryWash: [],
         secondaryExposure: [],
         secondaryWash: [],
-        chromagenExposure: []
+        finalExposure: []
       },
       selectedSamples: {
         a: null,
@@ -108,6 +108,7 @@ class App extends React.Component {
     const binding = secondaryAntibody ? secondaryAntibody.binding : 0;
     const efficiency = secondaryAntibody ? secondaryAntibody.efficiency : 0;
     const plates = secondaryAntibody ? secondaryAntibody.plates : [];
+    const secAntiKey = secondaryAntibody ? secondaryAntibody.key : null;
     const concentration = calcConcentrationFactor(
       inputConcentration,
       stockMicrogramPerMillilitre,
@@ -129,8 +130,13 @@ class App extends React.Component {
     // calc dilutions
     Object.keys(selectedSamples).map(key => {
       let series = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-      if (selectedSamples[key] && plate && dilutionFactor) {
-        const value = selectedSamples[key].plates[plate] / 10;
+      if (selectedSamples[key] && plate && dilutionFactor && secondaryAntibody && concentration) {
+        const sampleResults = selectedSamples[key].results;
+        const entry = sampleResults.find(
+          i => i.secondaryAntibody === secAntiKey && i.plate === plate
+        );
+        const value = entry.value / 10;
+        //const value = selectedSamples[key].plates[plate] / 10;
         series = calcDilutionSeries(value, dilutionFactor, primaryEfficiencyFactor);
       }
 
@@ -165,11 +171,8 @@ class App extends React.Component {
           }
         }
 
-        if (phases["chromagenExposure"].length > 0) {
-          data.opticalDensity = calcOpticalDensity(
-            data.secondary,
-            sumInt(phases["chromagenExposure"])
-          );
+        if (phases["finalExposure"].length > 0) {
+          data.opticalDensity = calcOpticalDensity(data.secondary, sumInt(phases["finalExposure"]));
           data.opacity = calcOpacity(data.opticalDensity);
           Object.keys(this.state.chromagen.wavelengths).map(key => {
             data[key] = calcOpticalDensityForWavelength(
@@ -189,9 +192,9 @@ class App extends React.Component {
     return result;
   }
 
-  selectSample(key, subject) {
+  selectSample(key, identifier) {
     const { selectedSamples } = this.state;
-    const sample = this.samples.find(i => i.subject.toString() === subject.toString());
+    const sample = this.samples.find(i => i.identifier.toString() === identifier.toString());
     selectedSamples[key] = sample;
     return selectedSamples;
   }
@@ -240,56 +243,59 @@ class App extends React.Component {
     );
   }
 
-  handleSelectSample(key, subject) {
-    const selectedSamples = this.selectSample(key, subject);
+  handleSelectSample(key, identifier) {
+    console.log(identifier);
+    const exists = this.samples.find(i => i.identifier === identifier);
+    if (!exists) return null;
+    const selectedSamples = this.selectSample(key, identifier);
     this.setState({ selectedSamples }, () => this.genAssay());
   }
 
   handleSelectPlate(plate) {
     this.setState(
       {
-        plate,
-        phase: "primaryExposure"
+        plate
+        //phase: "primaryExposure"
       },
       () => this.genAssay()
     );
   }
 
-  handleWait() {
+  handleWait(toPhase = null) {
     const { phase, waitOn } = this.state;
-    if (!phase) return;
+    //if (!phase) return;
 
-    let newPhase = phase;
+    //et newPhase = phase;
 
     this.setState(
       {
         waitOn: !waitOn,
-        phase: newPhase
+        phase: toPhase || phase
       },
       () => this.controlTimer()
     );
   }
 
-  handleWash() {
-    const { phase, phases, washOn } = this.state;
-    const hasPrimaryExposure = phases["primaryExposure"].length > 0;
-    const hasPrimaryWash = phases["primaryWash"].length > 0;
-    const hasSecondaryExposure = phases["secondaryExposure"].length > 0;
-    const hasSecondaryWash = phases["secondaryWash"].length > 0;
-    let newPhase = !phase ? "primaryWash" : phase;
+  handleWash(toPhase = null) {
+    const { phase, washOn } = this.state;
+    // const hasPrimaryExposure = phases["primaryExposure"].length > 0;
+    // const hasPrimaryWash = phases["primaryWash"].length > 0;
+    // const hasSecondaryExposure = phases["secondaryExposure"].length > 0;
+    // const hasSecondaryWash = phases["secondaryWash"].length > 0;
+    // let newPhase = !phase ? "primaryWash" : phase;
 
-    if (hasPrimaryExposure && !hasPrimaryWash) {
-      newPhase = "primaryWash";
-    }
+    // if (hasPrimaryExposure && !hasPrimaryWash) {
+    //   newPhase = "primaryWash";
+    // }
 
-    if (hasSecondaryExposure && !hasSecondaryWash) {
-      newPhase = "secondaryWash";
-    }
+    // if (hasSecondaryExposure && !hasSecondaryWash) {
+    //   newPhase = "secondaryWash";
+    // }
 
     this.setState(
       {
         washOn: !washOn,
-        phase: newPhase
+        phase: toPhase || phase
       },
       () => this.controlTimer()
     );
@@ -297,14 +303,14 @@ class App extends React.Component {
 
   handleConcentrationInput(value) {
     this.setState({
-      phase: "secondaryExposure",
+      //phase: "secondaryExposure",
       inputConcentration: value
     });
   }
 
   handleSelectSecondaryAntibody(key) {
     this.setState({
-      secondaryAntibody: this.secondaryAntibodies[key]
+      secondaryAntibody: this.secondaryAntibodies.find(i => i.key === key)
     });
   }
 
@@ -324,8 +330,8 @@ class App extends React.Component {
 
   handleSelectChromagen(key) {
     this.setState({
-      chromagen: this.chromagens[key],
-      phase: "chromagenExposure"
+      chromagen: this.chromagens[key]
+      //phase: "finalExposure"
     });
   }
 
@@ -438,69 +444,122 @@ class App extends React.Component {
         </fieldset>
         <hr />
 
-        <div>
-          <button
-            disabled={acidApplied || washOn}
-            aria-pressed={timerOn && waitOn}
-            onClick={({ nativeEvent }) => this.handleWait()}
-          >
-            {waitOn ? "Wait Stop" : "Wait Start"}
-          </button>
-
-          <button
-            disabled={acidApplied || waitOn}
-            aria-pressed={timerOn && washOn}
-            onClick={({ nativeEvent }) => this.handleWash()}
-          >
-            {washOn ? "wash Stop" : "wash Start"}
-          </button>
-
-          <span>{timeToMins(time)} mins</span>
-
-          <button
-            style={{ float: "right" }}
-            disabled={acidApplied}
-            onClick={({ nativeEvent }) => this.handleAcid()}
-          >
-            Apply Acid
-          </button>
-        </div>
-
-        <hr />
         <fieldset>
-          <legend>Step 3.1: Select Plate</legend>
-          <select onChange={e => this.handleSelectPlate(e.target.value)}>
-            <option>Select...</option>
-            {this.plates.map(i => (
-              <option key={i} value={i}>
-                {i}
-              </option>
-            ))}
-          </select>{" "}
-          {plate || ""}
+          <legend>Experiment Setup</legend>
+
+          <div>
+            <div>
+              <label htmlFor="plate">Plate: </label>
+              <select id="plate" onChange={e => this.handleSelectPlate(e.target.value)}>
+                <option>Select...</option>
+                {this.plates.map(i => (
+                  <option key={i} value={i}>
+                    {i}
+                  </option>
+                ))}
+              </select>{" "}
+              {plate || ""}
+            </div>
+
+            <div>
+              <label htmlFor="dilution">Volume to transfer in a dilution series </label>
+              <input
+                id="dilution"
+                type="number"
+                min="0"
+                max="100"
+                defaultValue={this.state.inputVolume}
+                onBlur={e => this.handleNumberBlur(e, "inputVolume")}
+                onInput={e => this.setState({ inputVolume: castToNum(e.target.value) })}
+              />{" "}
+              {dilutionFactor && <small>Dilution Factor: {dilutionFactor}</small>}
+            </div>
+
+            <div>
+              <label>
+                Secondary Antibody
+                <select onChange={e => this.handleSelectSecondaryAntibody(e.target.value)}>
+                  <option>select..</option>
+                  {this.secondaryAntibodies.map(i => (
+                    <option value={i.key} key={i.key}>
+                      {i.key}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {JSON.stringify(this.state.secondaryAntibody, null, 2)}
+              <br />
+              <label>
+                Secondary antibody concentration
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  defaultValue={this.state.secondaryInputVolume}
+                  onBlur={e => this.handleNumberBlur(e, "secondaryInputVolume")}
+                  onInput={e => this.handleConcentrationInput(castToNum(e.target.value))}
+                />{" "}
+              </label>
+              concentration: {concentration}
+            </div>
+
+            <div>
+              <label>
+                Set Chromagen
+                <select onChange={e => this.handleSelectChromagen(e.target.value)}>
+                  <option>select..</option>
+                  {Object.keys(this.chromagens).map(key => (
+                    <option key={key} value={key}>
+                      {key}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div>{chromagen && JSON.stringify(chromagen.wavelengths, null, 2)}</div>
+
+              <div
+                style={{
+                  width: "1rem",
+                  height: "1rem",
+                  backgroundColor: chromagen ? chromagen.color : "transparent"
+                }}
+              />
+            </div>
+          </div>
         </fieldset>
-
-        <hr />
-
-        <fieldset>
-          <legend>Set Dilution</legend>
-          Volume to transfer in a dilution series{" "}
-          <input
-            type="number"
-            min="0"
-            max="100"
-            defaultValue={this.state.inputVolume}
-            onBlur={e => this.handleNumberBlur(e, "inputVolume")}
-            onInput={e => this.setState({ inputVolume: castToNum(e.target.value) })}
-          />{" "}
-          {dilutionFactor && <small>Dilution Factor: {dilutionFactor}</small>}
-        </fieldset>
-
-        <hr />
 
         <fieldset>
           <legend>Select Patients</legend>
+
           {sampleKeys.map(i => (
+            <div key={i}>
+              Select Patient {i.toLocaleUpperCase()}{" "}
+              <label htmlFor={i}>
+                <input
+                  placeholder="Start typing..."
+                  list="patients"
+                  type="text"
+                  id={`row-$i`}
+                  onInput={e => this.handleSelectSample(i, e.target.value)}
+                  onChange={e => this.handleSelectSample(i, e.target.value)}
+                />
+              </label>
+              {/* <SampleSelect
+                sampleKey={i}
+                samples={this.samples}
+                handleSelectSample={this.handleSelectSample.bind(this)}
+              /> */}
+            </div>
+          ))}
+
+          <datalist id="patients">
+            {this.samples.map(i => (
+              <option key={`patient-${i.identifier}`} value={i.identifier} />
+            ))}
+          </datalist>
+
+          {/* {sampleKeys.map(i => (
             <div key={i}>
               Select Patient {i.toLocaleUpperCase()}{" "}
               <SampleSelect
@@ -509,13 +568,32 @@ class App extends React.Component {
                 handleSelectSample={this.handleSelectSample.bind(this)}
               />
             </div>
-          ))}
+          ))} */}
         </fieldset>
 
         <hr />
 
         <fieldset>
           <legend>Primary Exposure & wash</legend>
+          <div>
+            <button
+              disabled={acidApplied || washOn}
+              aria-pressed={timerOn && waitOn}
+              onClick={({ nativeEvent }) => this.handleWait("primaryExposure")}
+            >
+              {waitOn ? "Wait Stop" : "Wait Start"}
+            </button>
+
+            <button
+              disabled={acidApplied || waitOn}
+              aria-pressed={timerOn && washOn}
+              onClick={({ nativeEvent }) => this.handleWash("primaryWash")}
+            >
+              {washOn ? "wash Stop" : "wash Start"}
+            </button>
+
+            {phase && phase.includes("primary") ? <span>{timeToMins(time)} mins</span> : ""}
+          </div>
           <div>
             Primary Exposure:{" "}
             {phases.primaryExposure.filter(i => i).reduce((acc, cur) => acc + timeToMins(cur), 0)}
@@ -533,8 +611,29 @@ class App extends React.Component {
           </ul>
         </fieldset>
 
+        <hr />
+
         <fieldset>
           <legend>Secondary Exposure & Wash</legend>
+          <div>
+            <button
+              disabled={acidApplied || washOn}
+              aria-pressed={timerOn && waitOn}
+              onClick={({ nativeEvent }) => this.handleWait("secondaryExposure")}
+            >
+              {waitOn && phase && phase.includes("secondary") ? "Wait Stop" : "Wait Start"}
+            </button>
+
+            <button
+              disabled={acidApplied || waitOn}
+              aria-pressed={timerOn && washOn}
+              onClick={({ nativeEvent }) => this.handleWash("secondaryWash")}
+            >
+              {washOn && phase && phase.includes("secondary") ? "wash Stop" : "wash Start"}
+            </button>
+
+            {phase && phase.includes("secondary") ? <span>{timeToMins(time)} mins</span> : ""}
+          </div>
           <div>
             Secondary Exposure:{" "}
             {phases.secondaryExposure.filter(i => i).reduce((acc, cur) => acc + timeToMins(cur), 0)}
@@ -553,6 +652,31 @@ class App extends React.Component {
         </fieldset>
 
         <hr />
+
+        <fieldset>
+          <legend>Chromagen Exposure</legend>
+          <div>
+            <button
+              disabled={acidApplied || washOn}
+              aria-pressed={timerOn && waitOn}
+              onClick={({ nativeEvent }) => this.handleWait("finalExposure")}
+            >
+              {waitOn ? "Wait Stop" : "Wait Start"}
+            </button>
+
+            {phase && phase.includes("final") ? <span>{timeToMins(time)} mins</span> : ""}
+
+            <button
+              style={{ float: "right" }}
+              disabled={acidApplied}
+              onClick={({ nativeEvent }) => this.handleAcid()}
+            >
+              Apply Acid
+            </button>
+          </div>
+        </fieldset>
+
+        {/* <hr />
 
         <fieldset>
           <legend>Select secondary agent (antibody/antigen) & Concentration</legend>
@@ -577,9 +701,9 @@ class App extends React.Component {
             onInput={e => this.handleConcentrationInput(castToNum(e.target.value))}
           />{" "}
           concentration: {concentration}
-        </fieldset>
+        </fieldset> */}
 
-        <hr />
+        {/* <hr />
 
         <fieldset>
           <legend>Chromagen</legend>
@@ -604,7 +728,7 @@ class App extends React.Component {
               backgroundColor: chromagen ? chromagen.color : "transparent"
             }}
           />
-        </fieldset>
+        </fieldset> */}
 
         <hr />
 

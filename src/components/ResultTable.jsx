@@ -27,7 +27,7 @@ function ResultTable(props) {
         {keys.map(k => (
           <tr key={k}>
             {/* <td>{selectedSamples[k].subject}</td> */}
-            <th>{selectedSamples[k] && selectedSamples[k].subject}</th>
+            <th>{selectedSamples[k] && selectedSamples[k].identifier}</th>
             {assay[k].map((cell, idx) => (
               <td key={k + "-" + idx}>{roundPrecision(cell[property], 3)}</td>
             ))}
