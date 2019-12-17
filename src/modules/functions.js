@@ -38,8 +38,8 @@ export function washModifierSecondary(value, washResidue, binding) {
 }
 
 export function calcDilutionFactor(volume, dilutionModifier = 100) {
-  const vol = Number(volume); // make sure it's not a string
-  return (Number(dilutionModifier) + vol) / vol;
+  const vol = +volume; // make sure it's not a string
+  return (dilutionModifier + vol) / vol;
 }
 
 export function calcDilutionSeries(value = 0, dilutionFactor = 1.0, efficiencyFactor = 1.0) {

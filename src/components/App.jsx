@@ -379,7 +379,9 @@ class App extends React.Component {
     return (
       <div>
         <fieldset>
-          <legend>Developer Constants</legend>
+          <legend>
+            Developer Constants <small>Beta version 0.1</small>
+          </legend>
           <label>
             Miliseconds between ticks{" "}
             <input
