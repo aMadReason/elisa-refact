@@ -32,6 +32,17 @@ class App extends React.Component {
     this.secondaryAntibodies = this.props.secondaryAntibodies || [];
     this.chromagens = props.chromagens || { default: "blue" };
 
+    this.variainces = {
+      a: [],
+      b: [],
+      c: [],
+      d: [],
+      e: [],
+      f: [],
+      g: [],
+      h: []
+    };
+
     this.state = {
       primaryEfficiencyFactor: 1.0,
       variancePercent: 0, //4,
@@ -92,13 +103,15 @@ class App extends React.Component {
       assay,
       plate,
       phases,
+      phase,
       secondaryAntibody,
       selectedSamples,
       primaryEfficiencyFactor,
       inputVolume,
       dilutionModifier,
       inputConcentration,
-      outputVolumeInMicrolitre
+      outputVolumeInMicrolitre,
+      variancePercent
     } = this.state;
 
     const result = { ...assay };
@@ -136,13 +149,13 @@ class App extends React.Component {
           i => i.secondaryAntibody === secAntiKey && i.plate === plate
         );
         const value = entry.value / 10;
-        //const value = selectedSamples[key].plates[plate] / 10;
         series = calcDilutionSeries(value, dilutionFactor, primaryEfficiencyFactor);
       }
 
       // loop over series
-      result[key] = series.map(i => {
+      result[key] = series.map((i, index) => {
         const data = {
+          index,
           dilution: i,
           primary: 0,
           secondary: 0,
@@ -165,13 +178,18 @@ class App extends React.Component {
           data.secondary = calcBoundAntibody(data.primary, concentration, antibodyEff, binding);
           data.secondary = timeModifier(data.secondary, sumInt(phases["secondaryExposure"]));
           data.secondary = washModifierSecondary(data.secondary, secondaryWashResidue, binding);
-
-          if (this.state.variancePercent && this.state.variancePercent > 0) {
-            data.secondary = data.secondary + calcVariance(data.secondary, this.variancePercent);
-          }
         }
 
         if (phases["finalExposure"].length > 0) {
+          if (variancePercent && variancePercent > 0) {
+            // only set variance once after secondary processing is complete
+            if (!this.variainces[key][index]) {
+              this.variainces[key][index] = calcVariance(data.secondary, this.variancePercent);
+            }
+          }
+
+          this.secondary = this.secondary + this.variainces[key][index];
+
           data.opticalDensity = calcOpticalDensity(data.secondary, sumInt(phases["finalExposure"]));
           data.opacity = calcOpacity(data.opticalDensity);
           Object.keys(this.state.chromagen.wavelengths).map(key => {
@@ -244,7 +262,6 @@ class App extends React.Component {
   }
 
   handleSelectSample(key, identifier) {
-    console.log(identifier);
     const exists = this.samples.find(i => i.identifier === identifier);
     if (!exists) return null;
     const selectedSamples = this.selectSample(key, identifier);
@@ -255,7 +272,6 @@ class App extends React.Component {
     this.setState(
       {
         plate
-        //phase: "primaryExposure"
       },
       () => this.genAssay()
     );
@@ -263,9 +279,6 @@ class App extends React.Component {
 
   handleWait(toPhase = null) {
     const { phase, waitOn } = this.state;
-    //if (!phase) return;
-
-    //et newPhase = phase;
 
     this.setState(
       {
@@ -278,19 +291,6 @@ class App extends React.Component {
 
   handleWash(toPhase = null) {
     const { phase, washOn } = this.state;
-    // const hasPrimaryExposure = phases["primaryExposure"].length > 0;
-    // const hasPrimaryWash = phases["primaryWash"].length > 0;
-    // const hasSecondaryExposure = phases["secondaryExposure"].length > 0;
-    // const hasSecondaryWash = phases["secondaryWash"].length > 0;
-    // let newPhase = !phase ? "primaryWash" : phase;
-
-    // if (hasPrimaryExposure && !hasPrimaryWash) {
-    //   newPhase = "primaryWash";
-    // }
-
-    // if (hasSecondaryExposure && !hasSecondaryWash) {
-    //   newPhase = "secondaryWash";
-    // }
 
     this.setState(
       {
@@ -416,7 +416,7 @@ class App extends React.Component {
             <input
               type="number"
               defaultValue={this.state.variancePercent}
-              onBlur={e => this.handleNumberBlur(e, "primaryEfficiencyFactor")}
+              onBlur={e => this.handleNumberBlur(e, "variancePercent")}
               onInput={e => this.setState({ variancePercent: castToNum(e.target.value) })}
             />
             %

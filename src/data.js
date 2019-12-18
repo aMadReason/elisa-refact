@@ -2560,6 +2560,30 @@ export const samples = [
   },
   {
     sheet: "sle",
+    identifier: "W0331",
+    results: [
+      { plate: "IgG (Fc)", secondaryAntibody: "anti-IgM", value: 20 },
+      { plate: "IgG (Fc)", secondaryAntibody: "anti-IgG", value: 12 },
+      { plate: "IgG (Fc)", secondaryAntibody: "anti-IgA", value: 0 },
+      { plate: "Cyclic citrullinated peptide (CCP)", secondaryAntibody: "anti-IgM", value: 0 },
+      { plate: "Cyclic citrullinated peptide (CCP)", secondaryAntibody: "anti-IgG", value: 0 },
+      { plate: "Cyclic citrullinated peptide (CCP)", secondaryAntibody: "anti-IgA", value: 0 },
+      { plate: "Nuclear antigens (NA)", secondaryAntibody: "anti-IgM", value: 1280 },
+      { plate: "Nuclear antigens (NA)", secondaryAntibody: "anti-IgG", value: 1280 },
+      { plate: "Nuclear antigens (NA)", secondaryAntibody: "anti-IgA", value: 320 },
+      { plate: "Double-stranded DNA (dsDNA)", secondaryAntibody: "anti-IgM", value: 160 },
+      { plate: "Double-stranded DNA (dsDNA)", secondaryAntibody: "anti-IgG", value: 160 },
+      { plate: "Double-stranded DNA (dsDNA)", secondaryAntibody: "anti-IgA", value: 160 },
+      { plate: "Smith antigen (Sm)", secondaryAntibody: "anti-IgM", value: 640 },
+      { plate: "Smith antigen (Sm)", secondaryAntibody: "anti-IgG", value: 320 },
+      { plate: "Smith antigen (Sm)", secondaryAntibody: "anti-IgA", value: 80 },
+      { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgM", value: 80 },
+      { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgG", value: 80 },
+      { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgA", value: 20 }
+    ]
+  },
+  {
+    sheet: "sle",
     identifier: "P1098",
     results: [
       { plate: "IgG (Fc)", secondaryAntibody: "anti-IgM", value: 0 },
@@ -2632,6 +2656,30 @@ export const samples = [
   },
   {
     sheet: "sle",
+    identifier: "K4461",
+    results: [
+      { plate: "IgG (Fc)", secondaryAntibody: "anti-IgM", value: 4 },
+      { plate: "IgG (Fc)", secondaryAntibody: "anti-IgG", value: 4 },
+      { plate: "IgG (Fc)", secondaryAntibody: "anti-IgA", value: 0 },
+      { plate: "Cyclic citrullinated peptide (CCP)", secondaryAntibody: "anti-IgM", value: 10 },
+      { plate: "Cyclic citrullinated peptide (CCP)", secondaryAntibody: "anti-IgG", value: 10 },
+      { plate: "Cyclic citrullinated peptide (CCP)", secondaryAntibody: "anti-IgA", value: 10 },
+      { plate: "Nuclear antigens (NA)", secondaryAntibody: "anti-IgM", value: 1280 },
+      { plate: "Nuclear antigens (NA)", secondaryAntibody: "anti-IgG", value: 1280 },
+      { plate: "Nuclear antigens (NA)", secondaryAntibody: "anti-IgA", value: 640 },
+      { plate: "Double-stranded DNA (dsDNA)", secondaryAntibody: "anti-IgM", value: 300 },
+      { plate: "Double-stranded DNA (dsDNA)", secondaryAntibody: "anti-IgG", value: 160 },
+      { plate: "Double-stranded DNA (dsDNA)", secondaryAntibody: "anti-IgA", value: 160 },
+      { plate: "Smith antigen (Sm)", secondaryAntibody: "anti-IgM", value: 80 },
+      { plate: "Smith antigen (Sm)", secondaryAntibody: "anti-IgG", value: 80 },
+      { plate: "Smith antigen (Sm)", secondaryAntibody: "anti-IgA", value: 40 },
+      { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgM", value: 20 },
+      { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgG", value: 20 },
+      { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgA", value: 20 }
+    ]
+  },
+  {
+    sheet: "sle",
     identifier: "V3298",
     results: [
       { plate: "IgG (Fc)", secondaryAntibody: "anti-IgM", value: 2 },
@@ -2676,6 +2724,54 @@ export const samples = [
       { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgM", value: 2 },
       { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgG", value: 2 },
       { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgA", value: 2 }
+    ]
+  },
+  {
+    sheet: "sle",
+    identifier: "K1712",
+    results: [
+      { plate: "IgG (Fc)", secondaryAntibody: "anti-IgM", value: 0 },
+      { plate: "IgG (Fc)", secondaryAntibody: "anti-IgG", value: 0 },
+      { plate: "IgG (Fc)", secondaryAntibody: "anti-IgA", value: 0 },
+      { plate: "Cyclic citrullinated peptide (CCP)", secondaryAntibody: "anti-IgM", value: 0 },
+      { plate: "Cyclic citrullinated peptide (CCP)", secondaryAntibody: "anti-IgG", value: 0 },
+      { plate: "Cyclic citrullinated peptide (CCP)", secondaryAntibody: "anti-IgA", value: 0 },
+      { plate: "Nuclear antigens (NA)", secondaryAntibody: "anti-IgM", value: 160 },
+      { plate: "Nuclear antigens (NA)", secondaryAntibody: "anti-IgG", value: 160 },
+      { plate: "Nuclear antigens (NA)", secondaryAntibody: "anti-IgA", value: 80 },
+      { plate: "Double-stranded DNA (dsDNA)", secondaryAntibody: "anti-IgM", value: 40 },
+      { plate: "Double-stranded DNA (dsDNA)", secondaryAntibody: "anti-IgG", value: 40 },
+      { plate: "Double-stranded DNA (dsDNA)", secondaryAntibody: "anti-IgA", value: 40 },
+      { plate: "Smith antigen (Sm)", secondaryAntibody: "anti-IgM", value: 2 },
+      { plate: "Smith antigen (Sm)", secondaryAntibody: "anti-IgG", value: 2 },
+      { plate: "Smith antigen (Sm)", secondaryAntibody: "anti-IgA", value: 2 },
+      { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgM", value: 4 },
+      { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgG", value: 4 },
+      { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgA", value: 4 }
+    ]
+  },
+  {
+    sheet: "sle",
+    identifier: "W5564",
+    results: [
+      { plate: "IgG (Fc)", secondaryAntibody: "anti-IgM", value: 0 },
+      { plate: "IgG (Fc)", secondaryAntibody: "anti-IgG", value: 2 },
+      { plate: "IgG (Fc)", secondaryAntibody: "anti-IgA", value: 0 },
+      { plate: "Cyclic citrullinated peptide (CCP)", secondaryAntibody: "anti-IgM", value: 0 },
+      { plate: "Cyclic citrullinated peptide (CCP)", secondaryAntibody: "anti-IgG", value: 0 },
+      { plate: "Cyclic citrullinated peptide (CCP)", secondaryAntibody: "anti-IgA", value: 0 },
+      { plate: "Nuclear antigens (NA)", secondaryAntibody: "anti-IgM", value: 1280 },
+      { plate: "Nuclear antigens (NA)", secondaryAntibody: "anti-IgG", value: 1280 },
+      { plate: "Nuclear antigens (NA)", secondaryAntibody: "anti-IgA", value: 640 },
+      { plate: "Double-stranded DNA (dsDNA)", secondaryAntibody: "anti-IgM", value: 160 },
+      { plate: "Double-stranded DNA (dsDNA)", secondaryAntibody: "anti-IgG", value: 160 },
+      { plate: "Double-stranded DNA (dsDNA)", secondaryAntibody: "anti-IgA", value: 200 },
+      { plate: "Smith antigen (Sm)", secondaryAntibody: "anti-IgM", value: 160 },
+      { plate: "Smith antigen (Sm)", secondaryAntibody: "anti-IgG", value: 160 },
+      { plate: "Smith antigen (Sm)", secondaryAntibody: "anti-IgA", value: 80 },
+      { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgM", value: 160 },
+      { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgG", value: 320 },
+      { plate: "Ribonucleoprotein (RNP)", secondaryAntibody: "anti-IgA", value: 80 }
     ]
   },
   {
