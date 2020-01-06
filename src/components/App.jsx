@@ -63,6 +63,7 @@ class App extends React.Component {
       waitOn: false,
       washOn: false,
       secondaryAntibody: null,
+      dilutionLabls: [],
       phases: {
         primaryExposure: [],
         primaryWash: [],
@@ -94,8 +95,9 @@ class App extends React.Component {
   }
 
   componentDidMount() {
-    const assay = this.genAssay();
-    this.setState({ assay });
+    this.genAssay();
+    // const assay = this.genAssay();
+    // this.setState({ assay });
   }
 
   genAssay() {
@@ -103,7 +105,6 @@ class App extends React.Component {
       assay,
       plate,
       phases,
-      phase,
       secondaryAntibody,
       selectedSamples,
       primaryEfficiencyFactor,
@@ -206,7 +207,10 @@ class App extends React.Component {
       return null;
     });
 
-    this.setState({ assay: result });
+    // for use in assay svg
+    const dilutionLabels = calcDilutionSeries(inputVolume, dilutionFactor, 1);
+
+    this.setState({ assay: result, dilutionLabels });
     return result;
   }
 
@@ -246,16 +250,11 @@ class App extends React.Component {
     const { time, phases, phase, addSecondsPerTick } = this.state;
     const stamp = time + addSecondsPerTick * 1000;
     const phaseTimes = [...phases[phase]];
-
     phaseTimes.pop(); // remove previous counter is already waiting
-
     this.setState(
       {
         time: stamp,
-        phases: {
-          ...phases,
-          [phase]: [...phaseTimes, time]
-        }
+        phases: { ...phases, [phase]: [...phaseTimes, time] }
       },
       () => this.genAssay()
     );
@@ -303,7 +302,6 @@ class App extends React.Component {
 
   handleConcentrationInput(value) {
     this.setState({
-      //phase: "secondaryExposure",
       inputConcentration: value
     });
   }
@@ -331,7 +329,6 @@ class App extends React.Component {
   handleSelectChromagen(key) {
     this.setState({
       chromagen: this.chromagens[key]
-      //phase: "finalExposure"
     });
   }
 
@@ -341,6 +338,18 @@ class App extends React.Component {
     const value = castToNum(target.value);
     target.value = value;
     this.setState({ [key]: value });
+  }
+
+  handleVolumeInput(e) {
+    const inputVolume = castToNum(e.target.value);
+    const dilutionFactor = calcDilutionFactor(inputVolume, this.state.dilutionModifier);
+    const dilutionLabels = calcDilutionSeries(inputVolume, dilutionFactor, 1);
+
+    this.setState({
+      inputVolume,
+      dilutionFactor,
+      dilutionLabels
+    });
   }
 
   render() {
@@ -360,12 +369,14 @@ class App extends React.Component {
       inputVolume,
       dilutionModifier,
       inputConcentration,
-      outputVolumeInMicrolitre
+      outputVolumeInMicrolitre,
+      dilutionLabels
     } = this.state;
     const sampleKeys = Object.keys(assay);
     const dilutionFactor = calcDilutionFactor(inputVolume, dilutionModifier);
     const primaryWashResidue = calcWashResidueFromTimes(phases["primaryWash"] || []);
     const secondaryWashResidue = calcWashResidueFromTimes(phases["secondaryWash"] || []);
+
     let concentration = 0;
 
     if (secondaryAntibody) {
@@ -472,7 +483,12 @@ class App extends React.Component {
                 max="100"
                 defaultValue={this.state.inputVolume}
                 onBlur={e => this.handleNumberBlur(e, "inputVolume")}
-                onInput={e => this.setState({ inputVolume: castToNum(e.target.value) })}
+                onInput={e => this.handleVolumeInput(e)}
+                // onInput={e =>
+                //   this.setState({
+                //     inputVolume: castToNum(e.target.value)
+                //   })
+                // }
               />{" "}
               {dilutionFactor && <small>Dilution Factor: {dilutionFactor}</small>}
             </div>
@@ -533,7 +549,6 @@ class App extends React.Component {
 
         <fieldset>
           <legend>Select Patients</legend>
-
           {sampleKeys.map(i => (
             <div key={i}>
               Select Patient {i.toLocaleUpperCase()}{" "}
@@ -547,11 +562,6 @@ class App extends React.Component {
                   onChange={e => this.handleSelectSample(i, e.target.value)}
                 />
               </label>
-              {/* <SampleSelect
-                sampleKey={i}
-                samples={this.samples}
-                handleSelectSample={this.handleSelectSample.bind(this)}
-              /> */}
             </div>
           ))}
 
@@ -560,17 +570,6 @@ class App extends React.Component {
               <option key={`patient-${i.identifier}`} value={i.identifier} />
             ))}
           </datalist>
-
-          {/* {sampleKeys.map(i => (
-            <div key={i}>
-              Select Patient {i.toLocaleUpperCase()}{" "}
-              <SampleSelect
-                sampleKey={i}
-                samples={this.samples}
-                handleSelectSample={this.handleSelectSample.bind(this)}
-              />
-            </div>
-          ))} */}
         </fieldset>
 
         <hr />
@@ -678,60 +677,6 @@ class App extends React.Component {
           </div>
         </fieldset>
 
-        {/* <hr />
-
-        <fieldset>
-          <legend>Select secondary agent (antibody/antigen) & Concentration</legend>
-          <label>
-            <select onChange={e => this.handleSelectSecondaryAntibody(e.target.value)}>
-              <option>select..</option>
-              {Object.keys(this.secondaryAntibodies).map(k => (
-                <option value={k} key={k}>
-                  {k}
-                </option>
-              ))}
-            </select>
-          </label>
-          {JSON.stringify(this.state.secondaryAntibody, null, 2)}
-          <br />
-          <input
-            type="number"
-            min="0"
-            max="100"
-            defaultValue={this.state.secondaryInputVolume}
-            onBlur={e => this.handleNumberBlur(e, "secondaryInputVolume")}
-            onInput={e => this.handleConcentrationInput(castToNum(e.target.value))}
-          />{" "}
-          concentration: {concentration}
-        </fieldset> */}
-
-        {/* <hr />
-
-        <fieldset>
-          <legend>Chromagen</legend>
-          <label>
-            Set Chromagen
-            <select onChange={e => this.handleSelectChromagen(e.target.value)}>
-              <option>select..</option>
-              {Object.keys(this.chromagens).map(key => (
-                <option key={key} value={key}>
-                  {key}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div>{chromagen && JSON.stringify(chromagen.wavelengths, null, 2)}</div>
-
-          <div
-            style={{
-              width: "1rem",
-              height: "1rem",
-              backgroundColor: chromagen ? chromagen.color : "transparent"
-            }}
-          />
-        </fieldset> */}
-
         <hr />
 
         <div style={{ maxWidth: "100%" }}>
@@ -774,6 +719,8 @@ class App extends React.Component {
             assay={assay}
             fillColor={chromagen && chromagen.color}
             acid={this.state.acidApplied}
+            yLabels={selectedSamples}
+            xLabels={dilutionLabels}
           />
         </div>
 

@@ -39,14 +39,15 @@ export function washModifierSecondary(value, washResidue, binding) {
 
 export function calcDilutionFactor(volume, dilutionModifier = 100) {
   const vol = +volume; // make sure it's not a string
-  return (dilutionModifier + vol) / vol;
+  const result = (dilutionModifier + vol) / vol;
+  return result === Infinity ? 0 : result;
 }
 
 export function calcDilutionSeries(value = 0, dilutionFactor = 1.0, efficiencyFactor = 1.0) {
   const values = [+value];
   for (let i = 1; i < 12; i++) {
     let val = (values[i - 1] / +dilutionFactor) * efficiencyFactor;
-    values.push(val);
+    values.push(val || 0);
   }
   return values;
 }

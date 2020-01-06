@@ -1,4 +1,5 @@
 import React from "react";
+import { roundPrecision } from "../modules/functions";
 
 const style = () => `
 .cls-1,
@@ -77,14 +78,18 @@ const style = () => `
   opacity: 0;
   fill: blue;
 }
+
+g.assay-text-left text,
+g.assay-text-top text {
+  font-size: 12px;
+}
 `;
 
 function AssaySvg(props) {
-  const { assay, acid, fillColor } = props;
+  const { assay, yLabels, xLabels, acid, fillColor } = props;
 
   Object.keys(assay).map(key => {
-    if (assay[key].length === 0)
-      assay[key] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    if (assay[key].length === 0) assay[key] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     return null;
   });
 
@@ -134,146 +139,26 @@ function AssaySvg(props) {
           rx="3.04"
           ry="3.04"
         />
-        <rect
-          className="cls-4"
-          x="97.48"
-          y="276.77"
-          width="384.76"
-          height=".91"
-        />
-        <rect
-          className="cls-4"
-          x="97.48"
-          y="308.41"
-          width="384.76"
-          height=".91"
-        />
-        <rect
-          className="cls-4"
-          x="97.48"
-          y="213.44"
-          width="384.76"
-          height=".91"
-        />
-        <rect
-          className="cls-4"
-          x="97.48"
-          y="245.08"
-          width="384.76"
-          height=".91"
-        />
-        <rect
-          className="cls-4"
-          x="97.48"
-          y="150.19"
-          width="384.76"
-          height=".91"
-        />
-        <rect
-          className="cls-4"
-          x="97.48"
-          y="181.84"
-          width="384.76"
-          height=".91"
-        />
-        <rect
-          className="cls-4"
-          x="97.48"
-          y="86.86"
-          width="384.76"
-          height=".91"
-        />
-        <rect
-          className="cls-4"
-          x="97.48"
-          y="118.51"
-          width="384.76"
-          height=".91"
-        />
-        <rect
-          className="cls-4"
-          x="463.42"
-          y="68.1"
-          width=".91"
-          height="259.12"
-        />
-        <rect
-          className="cls-4"
-          x="431.69"
-          y="68.1"
-          width=".91"
-          height="259.12"
-        />
-        <rect
-          className="cls-4"
-          x="400.02"
-          y="68.1"
-          width=".91"
-          height="259.12"
-        />
-        <rect
-          className="cls-4"
-          x="368.29"
-          y="68.1"
-          width=".91"
-          height="259.12"
-        />
-        <rect
-          className="cls-4"
-          x="336.7"
-          y="68.1"
-          width=".91"
-          height="259.12"
-        />
-        <rect
-          className="cls-4"
-          x="304.97"
-          y="68.1"
-          width=".91"
-          height="259.12"
-        />
-        <rect
-          className="cls-4"
-          x="273.3"
-          y="68.1"
-          width=".91"
-          height="259.12"
-        />
-        <rect
-          className="cls-4"
-          x="241.58"
-          y="68.1"
-          width=".91"
-          height="259.12"
-        />
-        <rect
-          className="cls-4"
-          x="210.1"
-          y="68.1"
-          width=".91"
-          height="259.12"
-        />
-        <rect
-          className="cls-4"
-          x="178.37"
-          y="68.1"
-          width=".91"
-          height="259.12"
-        />
-        <rect
-          className="cls-4"
-          x="146.71"
-          y="68.1"
-          width=".91"
-          height="259.12"
-        />
-        <rect
-          className="cls-4"
-          x="114.98"
-          y="68.1"
-          width=".91"
-          height="259.12"
-        />
+        <rect className="cls-4" x="97.48" y="276.77" width="384.76" height=".91" />
+        <rect className="cls-4" x="97.48" y="308.41" width="384.76" height=".91" />
+        <rect className="cls-4" x="97.48" y="213.44" width="384.76" height=".91" />
+        <rect className="cls-4" x="97.48" y="245.08" width="384.76" height=".91" />
+        <rect className="cls-4" x="97.48" y="150.19" width="384.76" height=".91" />
+        <rect className="cls-4" x="97.48" y="181.84" width="384.76" height=".91" />
+        <rect className="cls-4" x="97.48" y="86.86" width="384.76" height=".91" />
+        <rect className="cls-4" x="97.48" y="118.51" width="384.76" height=".91" />
+        <rect className="cls-4" x="463.42" y="68.1" width=".91" height="259.12" />
+        <rect className="cls-4" x="431.69" y="68.1" width=".91" height="259.12" />
+        <rect className="cls-4" x="400.02" y="68.1" width=".91" height="259.12" />
+        <rect className="cls-4" x="368.29" y="68.1" width=".91" height="259.12" />
+        <rect className="cls-4" x="336.7" y="68.1" width=".91" height="259.12" />
+        <rect className="cls-4" x="304.97" y="68.1" width=".91" height="259.12" />
+        <rect className="cls-4" x="273.3" y="68.1" width=".91" height="259.12" />
+        <rect className="cls-4" x="241.58" y="68.1" width=".91" height="259.12" />
+        <rect className="cls-4" x="210.1" y="68.1" width=".91" height="259.12" />
+        <rect className="cls-4" x="178.37" y="68.1" width=".91" height="259.12" />
+        <rect className="cls-4" x="146.71" y="68.1" width=".91" height="259.12" />
+        <rect className="cls-4" x="114.98" y="68.1" width=".91" height="259.12" />
         <circle className="cls-4" cx="115.47" cy="87.35" r="13.92" />
         <circle className="cls-4" cx="115.47" cy="118.99" r="13.92" />
         <circle className="cls-4" cx="115.47" cy="150.63" r="13.92" />
@@ -535,11 +420,8 @@ function AssaySvg(props) {
           width="46.49"
           height="15.57"
         />
-        <text
-          className="cls-11"
-          transform="translate(116.31 38.35) rotate(-45)"
-        >
-          00000
+        <text className="cls-11" transform="translate(116.31 38.35) rotate(-45)">
+          {xLabels ? roundPrecision(xLabels[0], 3) : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -549,11 +431,8 @@ function AssaySvg(props) {
           width="46.49"
           height="15.57"
         />
-        <text
-          className="cls-11"
-          transform="translate(148.01 38.35) rotate(-45)"
-        >
-          00000
+        <text className="cls-11" transform="translate(148.01 38.35) rotate(-45)">
+          {xLabels ? roundPrecision(xLabels[1], 3) : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -563,11 +442,8 @@ function AssaySvg(props) {
           width="46.49"
           height="15.57"
         />
-        <text
-          className="cls-11"
-          transform="translate(179.37 38.35) rotate(-45)"
-        >
-          00000
+        <text className="cls-11" transform="translate(179.37 38.35) rotate(-45)">
+          {xLabels ? roundPrecision(xLabels[2], 3) : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -578,7 +454,7 @@ function AssaySvg(props) {
           height="15.57"
         />
         <text className="cls-11" transform="translate(211.3 38.35) rotate(-45)">
-          00000
+          {xLabels ? roundPrecision(xLabels[3], 3) : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -588,11 +464,8 @@ function AssaySvg(props) {
           width="46.49"
           height="15.57"
         />
-        <text
-          className="cls-11"
-          transform="translate(242.87 38.35) rotate(-45)"
-        >
-          00000
+        <text className="cls-11" transform="translate(242.87 38.35) rotate(-45)">
+          {xLabels ? roundPrecision(xLabels[4], 3) : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -602,11 +475,8 @@ function AssaySvg(props) {
           width="46.49"
           height="15.57"
         />
-        <text
-          className="cls-11"
-          transform="translate(274.67 38.35) rotate(-45)"
-        >
-          00000
+        <text className="cls-11" transform="translate(274.67 38.35) rotate(-45)">
+          {xLabels ? roundPrecision(xLabels[5], 3) : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -616,11 +486,8 @@ function AssaySvg(props) {
           width="46.49"
           height="15.57"
         />
-        <text
-          className="cls-11"
-          transform="translate(306.07 38.35) rotate(-45)"
-        >
-          00000
+        <text className="cls-11" transform="translate(306.07 38.35) rotate(-45)">
+          {xLabels ? roundPrecision(xLabels[6], 3) : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -630,11 +497,8 @@ function AssaySvg(props) {
           width="46.49"
           height="15.57"
         />
-        <text
-          className="cls-11"
-          transform="translate(337.62 38.35) rotate(-45)"
-        >
-          00000
+        <text className="cls-11" transform="translate(337.62 38.35) rotate(-45)">
+          {xLabels ? roundPrecision(xLabels[7], 3) : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -644,11 +508,8 @@ function AssaySvg(props) {
           width="46.49"
           height="15.57"
         />
-        <text
-          className="cls-11"
-          transform="translate(369.55 38.35) rotate(-45)"
-        >
-          00000
+        <text className="cls-11" transform="translate(369.55 38.35) rotate(-45)">
+          {xLabels ? roundPrecision(xLabels[8], 3) : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -658,11 +519,8 @@ function AssaySvg(props) {
           width="46.49"
           height="15.57"
         />
-        <text
-          className="cls-11"
-          transform="translate(401.32 38.35) rotate(-45)"
-        >
-          00000
+        <text className="cls-11" transform="translate(401.32 38.35) rotate(-45)">
+          {xLabels ? roundPrecision(xLabels[9], 3) : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -673,7 +531,7 @@ function AssaySvg(props) {
           height="15.57"
         />
         <text className="cls-11" transform="translate(433 38.35) rotate(-45)">
-          00000
+          {xLabels ? roundPrecision(xLabels[10], 3) : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -683,45 +541,42 @@ function AssaySvg(props) {
           width="46.49"
           height="15.57"
         />
-        <text
-          className="cls-11"
-          transform="translate(464.77 38.35) rotate(-45)"
-        >
-          00000
+        <text className="cls-11" transform="translate(464.77 38.35) rotate(-45)">
+          {xLabels ? roundPrecision(xLabels[11], 3) : "00000"}
         </text>
       </g>
       <g className="assay-text-left">
         <rect className="cls-10" y="79.36" width="65.7" height="15.57" />
         <text className="cls-11" transform="translate(4.53 91.59)">
-          Sample 1
+          A: {yLabels.a && yLabels.a.identifier}
         </text>
         <rect className="cls-10" y="111.63" width="65.7" height="15.57" />
         <text className="cls-11" transform="translate(4.53 123.86)">
-          Sample 1
+          B: {yLabels.b && yLabels.b.identifier}
         </text>
         <rect className="cls-10" y="143.84" width="65.7" height="15.57" />
         <text className="cls-11" transform="translate(4.53 156.07)">
-          Sample 1
+          C: {yLabels.c && yLabels.c.identifier}
         </text>
         <rect className="cls-10" y="174.96" width="65.7" height="15.57" />
         <text className="cls-11" transform="translate(4.53 187.19)">
-          Sample 1
+          D: {yLabels.d && yLabels.d.identifier}
         </text>
         <rect className="cls-10" y="207.09" width="65.7" height="15.57" />
         <text className="cls-11" transform="translate(4.53 219.31)">
-          Sample 1
+          E: {yLabels.e && yLabels.e.identifier}
         </text>
         <rect className="cls-10" y="238.62" width="65.7" height="15.57" />
         <text className="cls-11" transform="translate(4.53 250.85)">
-          Sample 1
+          F: {yLabels.f && yLabels.f.identifier}
         </text>
         <rect className="cls-10" y="269.9" width="65.7" height="15.57" />
         <text className="cls-11" transform="translate(4.53 282.13)">
-          Sample 1
+          G: {yLabels.g && yLabels.g.identifier}
         </text>
         <rect className="cls-10" y="301.94" width="65.7" height="15.57" />
         <text className="cls-11" transform="translate(4.53 314.17)">
-          Sample 1
+          H: {yLabels.h && yLabels.h.identifier}
         </text>
       </g>
       <g className="assay-wells">
