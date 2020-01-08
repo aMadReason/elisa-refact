@@ -1,5 +1,5 @@
 import React from "react";
-import { roundPrecision } from "../modules/functions";
+import {} from "../modules/functions";
 
 const style = () => `
 .cls-1,
@@ -421,7 +421,7 @@ function AssaySvg(props) {
           height="15.57"
         />
         <text className="cls-11" transform="translate(116.31 38.35) rotate(-45)">
-          {xLabels ? roundPrecision(xLabels[0], 3) : "00000"}
+          {xLabels ? xLabels[0] : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -432,7 +432,7 @@ function AssaySvg(props) {
           height="15.57"
         />
         <text className="cls-11" transform="translate(148.01 38.35) rotate(-45)">
-          {xLabels ? roundPrecision(xLabels[1], 3) : "00000"}
+          {xLabels ? xLabels[1] : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -443,7 +443,7 @@ function AssaySvg(props) {
           height="15.57"
         />
         <text className="cls-11" transform="translate(179.37 38.35) rotate(-45)">
-          {xLabels ? roundPrecision(xLabels[2], 3) : "00000"}
+          {xLabels ? xLabels[2] : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -454,7 +454,7 @@ function AssaySvg(props) {
           height="15.57"
         />
         <text className="cls-11" transform="translate(211.3 38.35) rotate(-45)">
-          {xLabels ? roundPrecision(xLabels[3], 3) : "00000"}
+          {xLabels ? xLabels[3] : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -465,7 +465,7 @@ function AssaySvg(props) {
           height="15.57"
         />
         <text className="cls-11" transform="translate(242.87 38.35) rotate(-45)">
-          {xLabels ? roundPrecision(xLabels[4], 3) : "00000"}
+          {xLabels ? xLabels[4] : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -476,7 +476,7 @@ function AssaySvg(props) {
           height="15.57"
         />
         <text className="cls-11" transform="translate(274.67 38.35) rotate(-45)">
-          {xLabels ? roundPrecision(xLabels[5], 3) : "00000"}
+          {xLabels ? xLabels[5] : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -487,7 +487,7 @@ function AssaySvg(props) {
           height="15.57"
         />
         <text className="cls-11" transform="translate(306.07 38.35) rotate(-45)">
-          {xLabels ? roundPrecision(xLabels[6], 3) : "00000"}
+          {xLabels ? xLabels[6] : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -498,7 +498,7 @@ function AssaySvg(props) {
           height="15.57"
         />
         <text className="cls-11" transform="translate(337.62 38.35) rotate(-45)">
-          {xLabels ? roundPrecision(xLabels[7], 3) : "00000"}
+          {xLabels ? xLabels[7] : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -509,7 +509,7 @@ function AssaySvg(props) {
           height="15.57"
         />
         <text className="cls-11" transform="translate(369.55 38.35) rotate(-45)">
-          {xLabels ? roundPrecision(xLabels[8], 3) : "00000"}
+          {xLabels ? xLabels[8] : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -520,7 +520,7 @@ function AssaySvg(props) {
           height="15.57"
         />
         <text className="cls-11" transform="translate(401.32 38.35) rotate(-45)">
-          {xLabels ? roundPrecision(xLabels[9], 3) : "00000"}
+          {xLabels ? xLabels[9] : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -531,7 +531,7 @@ function AssaySvg(props) {
           height="15.57"
         />
         <text className="cls-11" transform="translate(433 38.35) rotate(-45)">
-          {xLabels ? roundPrecision(xLabels[10], 3) : "00000"}
+          {xLabels ? xLabels[10] : "00000"}
         </text>
         <rect
           className="cls-10"
@@ -542,7 +542,7 @@ function AssaySvg(props) {
           height="15.57"
         />
         <text className="cls-11" transform="translate(464.77 38.35) rotate(-45)">
-          {xLabels ? roundPrecision(xLabels[11], 3) : "00000"}
+          {xLabels ? xLabels[11] : "00000"}
         </text>
       </g>
       <g className="assay-text-left">
