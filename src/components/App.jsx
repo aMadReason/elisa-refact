@@ -210,13 +210,8 @@ class App extends React.Component {
     // for use in assay svg
     const inDilutionLabels = calcDilutionSeries(inputVolume, dilutionFactor, 1);
 
-    const dilutionLabels = inDilutionLabels.map((d, idx) => {
-      //const mod = d % dilutionFactor;
+    const dilutionLabels = inDilutionLabels.map((v, idx) => {
       const denom = Math.pow(dilutionFactor, idx + 1);
-
-      console.log(`1/${Math.round(denom)}`);
-
-      //return d;
       return `1/${Math.round(denom)}`;
     });
 
